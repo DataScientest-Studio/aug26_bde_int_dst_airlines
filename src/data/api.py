@@ -9,30 +9,24 @@ class API:
     
     def call(self, method: HTTPMethod = "GET", headers=None, params=None):
         if method == 'GET':
-            res = requests.get(self.url, headers = headers, params = params)
+            try: 
+                res = requests.get(self.url, headers = headers, params = params)
+                
+                # Throw Error if API status = 4xx or 5xx
+                res.raise_for_status()
 
-            if res.status_code == 200:
                 return res.json()
-            else: 
-                return {
-                    "Error": res.text
-                }
+
+            except requests.exceptions.RequestException as err:
+                raise Exception(f"[API-ERROR] {err.response.json()}")
         elif method == 'POST':
-            return {
-                "Error": 'NYI'
-            }
+            raise NotImplementedError(f"{method}: NYI")
         elif method == 'PUT':
-            return {
-                "Error": 'NYI'
-            }
+            raise NotImplementedError(f"{method}: NYI")
         elif method == 'DELETE':
-            return {
-                "Error": 'NYI'
-            }
+            raise NotImplementedError(f"{method}: NYI")
         else:
-            return {
-                "Error": f"Unsupported method: {method}"
-            }
+            raise Exception(f"Unsupported method: {method}")
 
     
     
