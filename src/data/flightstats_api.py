@@ -1,11 +1,13 @@
 from .api import API
 from src.utils.env_loader import load_env_var
+from src.utils.exception_handling_decorator import exception_handling
 
 class FlightStatsAPI:
 
     def __init__(self):
         self.api_token = load_env_var("FLIGHTSTATS_API_TOKEN")
 
+    @exception_handling
     def getFlightStatsAPI(self):
         header={
             'Authorization': self.api_token,
