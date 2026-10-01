@@ -1,4 +1,4 @@
-from src.data.flightstats_api import FlightStatsAPI
+from src.data.cirium_sky_api import CiriumSkyAPI
 
-flightstats = FlightStatsAPI()
-flightstats.getFlightStatsAPI()
+CiriumSky = CiriumSkyAPI()
+CiriumSky.getCiriumSkyAPI()
