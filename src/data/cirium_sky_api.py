@@ -1,4 +1,4 @@
-from .api import API
+from src.utils.api import API
 from src.utils.env_loader import load_env_var
 from src.utils.exception_handling_decorator import exception_handling
 
