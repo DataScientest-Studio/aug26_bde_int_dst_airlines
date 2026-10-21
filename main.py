@@ -1,4 +1,7 @@
-from src.data.cirium_sky_api import CiriumSkyAPI
+# from src.data.cirium_sky_api import CiriumSkyAPI
+from src.fapi.fast_api import FAPI
 
-CiriumSky = CiriumSkyAPI()
-CiriumSky.getAirlines()
+app = FAPI().app
+
+# CiriumSky = CiriumSkyAPI()
+# CiriumSky.getAirlines()
