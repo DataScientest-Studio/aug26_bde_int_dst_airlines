@@ -7,15 +7,15 @@ class FAPI:
 
     Initializes the FastAPI instance and registers all application routers.
     """
-    
+
     def __init__(self):
         """Initialize the FastAPI app and register API routes."""
         self.app = FastAPI()
 
         # List of all route handler instances to be registered
         router_list = [
-            Route_Test(),
-            Route_Test2()
+            Route_Test().router,
+            Route_Test2().router
         ]
 
         # Register each router with the FastAPI application instance
