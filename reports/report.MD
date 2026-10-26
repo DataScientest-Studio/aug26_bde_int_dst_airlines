@@ -52,8 +52,6 @@ env.template:
 main.py:
  - the main entry point of the application, eliminating the need to run individual scripts manually.
 
-src/data/api.py:
- - model and error handling about the api, that we don't need this in every script
 
 src/data/flightstats_api.py:
  - a script which calls the flightstats api and edit the data
@@ -66,8 +64,33 @@ src/databases/database.py:
 
 src/utils: 
  - Contains general helper modules and utility functions.
+ 
+src/utils/api.py:
+ - model and error handling about the api, that we don't need this in every script
 
 src/utils/env_loader.py:
  - A utility function to load and validate environment variables from the .env file.
 
+reports/database_documentation.md:
+  - Documentation of the PostgreSQL database schema, including table structures, fields, data types, and API mappings for OpenSkyAPI and OpenWeatherAPI.
+
+reports/figures/er_diagram.png:
+  - The visual Entity-Relationship
+
 ## deleted folders/files:
+
+# APIs:
+- Lufthansa API:
+    - Disabled
+- OpenSky API: (in use)
+    - Fetch live flight data
+- AirFrance API:
+    - Didn't work
+- Cirium API:
+    - Provides data for only 14 days – not useful for us because we need live data
+- FlightStats API:
+    - Requested access, but only received credentials for Cirium API
+- Aviationstack API:
+    - Limited to 100 requests per month – not enough for our use case (fetching data for two airports daily requires ~120 requests/month)
+- OpenWeather API: (in use)
+    - Fetch weather data for the airports
