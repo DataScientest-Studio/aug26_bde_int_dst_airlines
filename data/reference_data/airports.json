@@ -1,0 +1,72 @@
+{
+  "EDDM": {
+    "name": "Munich Airport",
+    "city": "Munich",
+    "latitude": 48.3538,
+    "longitude": 11.7861,
+    "timezone": "Europe/Berlin",
+    "iata": "MUC",
+    "opensky_bbox": {
+      "lamin": 48.16,
+      "lamax": 48.55,
+      "lomin": 11.46,
+      "lomax": 12.11
+}
+  },
+  "EDDF": {
+    "name": "Frankfurt Airport",
+    "city": "Frankfurt",
+    "latitude": 50.0379,
+    "longitude": 8.5622,
+    "timezone": "Europe/Berlin",
+    "iata": "FRA",
+    "opensky_bbox": {
+      "lamin": 49.85,
+      "lamax": 50.58,
+      "lomin": 8.30,
+      "lomax": 8.95
+    }
+  },
+  "EDDB": {
+    "name": "Berlin Brandenburg Airport",
+    "city": "Berlin",
+    "latitude": 52.3617,
+    "longitude": 13.5023,
+    "timezone": "Europe/Berlin",
+    "iata": "BER",
+    "opensky_bbox": {
+      "lamin": 52.33,
+      "lamax": 52.65,
+      "lomin": 13.09,
+      "lomax": 13.76
+    }
+  },
+  "EDDH": {
+    "name": "Hamburg Airport",
+    "city": "Hamburg",
+    "latitude": 53.6304,
+    "longitude": 9.9882,
+    "timezone": "Europe/Berlin",
+    "iata": "HAM",
+    "opensky_bbox": {
+      "lamin": 53.3667,
+      "lamax": 53.7500,
+      "lomin": 9.7000,
+      "lomax": 10.3500
+    }
+  },
+  "EDDL": {
+    "name": "Düsseldorf Airport",
+    "city": "Düsseldorf",
+    "latitude": 51.289501,
+    "longitude": 6.766780,
+    "timezone": "Europe/Berlin",
+    "iata": "DUS",
+    "opensky_bbox": {
+      "lamin": 51.10,
+      "lamax": 51.48,
+      "lomin": 6.45,
+      "lomax": 7.08
+    }
+  }
+}
