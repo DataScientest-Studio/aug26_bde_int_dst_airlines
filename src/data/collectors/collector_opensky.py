@@ -35,8 +35,13 @@ def main():
   for icao, airport in load_airports().items():
     try:
       retrieve_states(opensky_client=client, airport_icao=icao, airport=airport)
-    except Exception as e:
-      logger.exception("FAILED | airport=%s", icao)
+    except Exception as exc:
+      #logger.exception("FAILED | airport=%s", icao)
+      logger.error(
+        "FAILED | airport=%s | error_type=%s", 
+        icao,
+        type(exc).__name__
+      )
       failures.append(icao)
 
   if failures:

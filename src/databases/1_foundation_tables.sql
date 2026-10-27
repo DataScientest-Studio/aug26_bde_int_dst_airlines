@@ -77,7 +77,7 @@ create table if not exists public.icon (
 
 create table if not exists public.weather (
   weather_id serial primary key,
-  icon_id int4 references icon(icon_id),
+  icon_id char(3) references icon(icon_id),
   main text null,
   description text null
 );
