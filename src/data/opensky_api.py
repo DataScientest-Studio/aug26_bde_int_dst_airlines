@@ -1,4 +1,4 @@
-from src.utils..api import API
+from src.utils.api import API
 from src.utils.exception_handling_decorator import exception_handling
 class OpenSkyAPI:
 
