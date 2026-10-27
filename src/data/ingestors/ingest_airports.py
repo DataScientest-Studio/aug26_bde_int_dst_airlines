@@ -3,7 +3,7 @@ from contextlib import closing
 
 import psycopg2
 
-from common.airports import load_airports
+from src.data.common.airports import load_airports
 
 '''
 Insertion of the airports from airports.json into public.airport table.
