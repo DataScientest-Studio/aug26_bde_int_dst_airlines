@@ -19,32 +19,46 @@ app.layout = html.Div(
         html.P(id="last-update"),
         # -----hier fängt der Titel an
         html.Div(
+            className="header",
             children=[
                 html.H1("Airlines Live Dashboard"),
                 html.Div(
                     children=[
-                        # Dropdown label
-                        html.Label("Airline"),
-                        dcc.Dropdown(
-                            id="filter-airline",
-                            options=["All airlines", "Lufthansa", "Swiss", "Austrian"],
-                            value="All airlines",
+                        # Filter 1: Airline
+                        html.Div(
+                            children=[
+                                html.Label("Airline"),
+                                dcc.Dropdown(
+                                    id="filter-airline",
+                                    options=[
+                                        "All airlines",
+                                        "Lufthansa",
+                                        "Swiss",
+                                        "Austrian",
+                                    ],
+                                    value="All airlines",
+                                ),
+                            ],
+                            style={"width": "250px"},
+                        ),
+                        # Filter 2: Datum
+                        html.Div(
+                            children=[
+                                html.Label("Date"),
+                                dcc.DatePickerSingle(
+                                    id="filter-date", date="2026-10-30"
+                                ),
+                            ],
                         ),
                     ],
-                    style={"width": "250px"},  # Breite des Filters
+                    style={"display": "flex", "gap": "20px"},  # Filter nebeneinander
                 ),
             ],
             style={
-                "display": "flex",  # nebeneinander
+                "display": "flex",  # Titel und Filter nebeneinander
                 "justify-content": "space-between",  # Titel links, Filter rechts
-                "align-items": "center",  # beide auf gleicher Höhe
+                "align-items": "center",  # gleiche Höhe
             },
-        ),
-        html.Div(
-            children=[
-                html.Label("Date"),
-                dcc.DatePickerSingle(id="filter-date", date="2026-10-30"),
-            ],
         ),
         # Row with 3 Fields :
         html.Div(
@@ -105,6 +119,22 @@ app.layout = html.Div(
                                 {"name": "Status", "id": "status"},
                                 {"name": "ICAO24", "id": "icao24"},
                                 {"name": "Date", "id": "date"},
+                            ],
+                            style_header={
+                                "backgroundColor": "#1f3b73",
+                                "color": "white",
+                                "fontWeight": "bold",
+                            },
+                            style_cell={
+                                "padding": "8px",
+                                "textAlign": "left",
+                                "fontFamily": "Arial",
+                            },
+                            style_data_conditional=[
+                                {
+                                    "if": {"row_index": "odd"},
+                                    "backgroundColor": "#f5f5f5",
+                                },
                             ],
                         ),
                     ],
