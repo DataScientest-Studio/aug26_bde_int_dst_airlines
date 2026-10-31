@@ -1,0 +1,13 @@
+/* Ganze Seite: Schriftart und Rand */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+/* grauer Kacheln */
+.tile {
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    padding: 10px 20px;
+    background-color: #f5f5f5;
+}
