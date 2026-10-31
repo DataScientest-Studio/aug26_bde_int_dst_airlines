@@ -91,6 +91,7 @@ app.layout = html.Div(
                             type="text",
                             placeholder="Search icao24 no., e.g. 3c6444",
                         ),
+                        html.P(id="no-flights-message"),
                         # Flights table
                         dash_table.DataTable(
                             id="flights-table",
@@ -146,6 +147,7 @@ app.layout = html.Div(
     Output("kpi-busiest", "children"),
     Output("kpi-duration", "children"),
     Output("flights-table", "data"),
+    Output("no-flights-message", "children"),
     Input("filter-airline", "value"),
     Input("search-icao24", "value"),
     Input("filter-date", "date"),
@@ -169,7 +171,10 @@ def update_dashboard(airline, search, date):
             else:
                 if search in flight["icao24"]:
                     selected_flights.append(flight)
-
+    if len(selected_flights) == 0:
+        message = "No flights found for this filter."
+    else:
+        message = ""
     # Kachel 1: Flüge zählen
     number_of_flights = len(selected_flights)
 
@@ -179,7 +184,7 @@ def update_dashboard(airline, search, date):
     duration = " random 3h 15 min"
 
     # 4 return same Reihenfolge for output
-    return number_of_flights, in_air, busiest, duration, selected_flights
+    return number_of_flights, in_air, busiest, duration, selected_flights, message
 
 
 # ===== Callback 2: Zeile anklicken → Details anzeigen =====
