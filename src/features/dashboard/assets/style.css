@@ -2,39 +2,58 @@
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    background-color: #f5f6f8;
+    color: #222222;
 }
 
 /* grauer Kacheln */
 .tile {
-    border: 1px solid #cccccc;
+    background-color: white;
+    border: 1px solid #e3e5e8;
     border-radius: 8px;
-    padding: 10px 20px;
-    background-color: #f5f5f5;
+    padding: 15px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    flex: 1;
+    margin-bottom: 20px;
 }
 
-/* Kopfzeile blau mit weißer schrift  */
+/* Kopfzeile   */
 .header {
-    background-color: #1f3b73;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    background-color: transparent;
+    color: #222222;
+    padding: 10px 0;
+    border-bottom: 1px solid #dddddd;
+    margin-bottom: 20px
 }
 
 /*kachel*/
 
 .tile p {
     margin: 4px 0;
+    color: #666666;
+    font-size: 14px;
 }
 
 /*Kachel design*/
 
 .tile h2 {
     margin: 4px 0;
-    font-size: 22px;
+    font-size: 26px;
+    font-family: Consolas, monospace;
 }
 
 .header .dash-dropdown,
 .header input {
     color: black;
+}
+
+/*  Zeile unter dem Titel */
+.subtitle {
+    color: #666666;
+    font-size: 13px;
+    margin: 0;
+}
+/* Titel  */
+.header h1 {
+    margin: 0 0 4px 0;
 }

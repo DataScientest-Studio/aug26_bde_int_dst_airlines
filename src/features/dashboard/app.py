@@ -16,12 +16,17 @@ app.layout = html.Div(
             id="refresh-timer",
             interval=10000,
         ),
-        html.P(id="last-update"),
+        # html.P(id="last-update"),
         # -----hier fängt der Titel an
         html.Div(
             className="header",
             children=[
-                html.H1("Airlines Live Dashboard"),
+                html.Div(
+                    children=[
+                        html.H1("Airlines Live Dashboard"),
+                        html.P(id="last-update", className="subtitle"),
+                    ],
+                ),
                 html.Div(
                     children=[
                         # Filter 1: Airline
@@ -98,7 +103,9 @@ app.layout = html.Div(
             children=[
                 # ----- linke Spalte: Suchfeld + Tabelle -----
                 html.Div(
+                    className="tile",
                     children=[
+                        html.H3("Flights"),  # titel der Box
                         # search field for aircraft
                         dcc.Input(
                             id="search-icao24",
@@ -109,6 +116,7 @@ app.layout = html.Div(
                         # Flights table
                         dash_table.DataTable(
                             id="flights-table",
+                            sort_action="native",
                             columns=[
                                 {"name": "Flight", "id": "flight"},
                                 {"name": "Airline", "id": "airline"},
@@ -121,19 +129,26 @@ app.layout = html.Div(
                                 {"name": "Date", "id": "date"},
                             ],
                             style_header={
-                                "backgroundColor": "#1f3b73",
-                                "color": "white",
+                                "backgroundColor": "white",
+                                "color": "#222222",
                                 "fontWeight": "bold",
+                                "borderBottom": "2px solid #dddddd",
                             },
                             style_cell={
-                                "padding": "8px",
+                                "padding": "10px",
                                 "textAlign": "left",
                                 "fontFamily": "Arial",
+                                "border": "none",
+                                "borderBottom": "1px solid #eeeeee",
                             },
                             style_data_conditional=[
                                 {
-                                    "if": {"row_index": "odd"},
-                                    "backgroundColor": "#f5f5f5",
+                                    "if": {"filter_query": '{status} = "Landed"'},
+                                    "color": "green",
+                                },
+                                {
+                                    "if": {"filter_query": '{status} = "In the air"'},
+                                    "color": "#1f6fd1",
                                 },
                             ],
                         ),
