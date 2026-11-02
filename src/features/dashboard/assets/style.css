@@ -57,3 +57,19 @@ body {
 .header h1 {
     margin: 0 0 4px 0;
 }
+
+/* Suchfeld: zb icao24 */
+.search-box {
+    width: 280px;
+    padding: 8px 10px;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+/*Zeile design für Flug Box*/
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}

@@ -111,12 +111,14 @@ app.layout = html.Div(
                             id="search-icao24",
                             type="text",
                             placeholder="Search icao24 no., e.g. 3c6444",
+                            className="search-box",
                         ),
                         html.P(id="no-flights-message"),
                         # Flights table
                         dash_table.DataTable(
                             id="flights-table",
                             sort_action="native",
+                            page_size=10,
                             columns=[
                                 {"name": "Flight", "id": "flight"},
                                 {"name": "Airline", "id": "airline"},
@@ -162,7 +164,7 @@ app.layout = html.Div(
                         html.Div(
                             children=[
                                 html.H3("Selected flight"),
-                                html.P(id="selected-flight"),
+                                html.Div(id="selected-flight"),
                             ],
                             className="tile",
                         ),
@@ -170,7 +172,7 @@ app.layout = html.Div(
                         html.Div(
                             children=[
                                 html.H3("Weather at destination"),
-                                html.P(id="weather-box"),
+                                html.Div(id="weather-box"),
                             ],
                             className="tile",
                         ),
@@ -237,7 +239,7 @@ def update_dashboard(airline, search, date):
     Output("selected-flight", "children"),
     Output("weather-box", "children"),
     Input("flights-table", "active_cell"),
-    Input("flights-table", "data"),
+    Input("flights-table", "derived_viewport_data"),
 )
 def show_selected_flight(active_cell, rows):
     # Noch nichts angeklickt? Dann zwei Hinweise anzeigen
@@ -251,17 +253,55 @@ def show_selected_flight(active_cell, rows):
     flight = rows[row_number]
 
     # Text für Box 1: nur der Flug
-    flight_text = flight["flight"] + " (" + flight["airline"] + "): "
-    flight_text = flight_text + flight["from"] + " → " + flight["to"]
-
+    flight_text = [
+        html.P("Flight number"),
+        html.H2(flight["flight"]),
+        html.Div(
+            className="row",
+            children=[
+                html.Div(
+                    children=[
+                        html.P("Departure"),
+                        html.B(flight["from"] + " · " + flight["departure"]),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.P("Arrival"),
+                        html.B(flight["to"] + " · " + flight["arrival"]),
+                    ],
+                    style={"text-align": "right"},
+                ),
+            ],
+        ),
+        # zeile 2 Airline
+        html.Div(
+            className="row",
+            children=[html.P("Airline"), html.P(flight["airline"])],
+        ),
+        # zeile 3 : Status
+        html.Div(
+            className="row",
+            children=[html.P("Status"), html.P(flight["status"])],
+        ),
+    ]
     # Das Wetter am Zielflughafen holen
     destination = flight["to"]
     weather = WEATHER[destination]
 
     # Text für Box 2: nur das Wetter
-    weather_text = (
-        destination + ": " + str(weather["temp"]) + " °C, " + weather["condition"]
-    )
+    weather_text = [
+        html.P(destination),
+        html.H2(str(weather["temp"]) + " °C"),
+        html.Div(
+            className="row",
+            children=[html.P("Conditions: \n"), html.P(weather["condition"])],
+        ),
+    ]
+
+    # weather_text = (
+    # destination + ": " + str(weather["temp"]) + " °C, " + weather["condition"]
+    # )
 
     # Zwei Outputs, also zwei Werte, gleiche Reihenfolge
     return flight_text, weather_text
