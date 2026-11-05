@@ -4,6 +4,7 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
+from pypika import Query, Table, Order, functions as fn, Parameter, Field
 
 class Get_Flight:
     
@@ -91,7 +92,7 @@ class Get_Flight:
             .on(a.airport_icao == ws.airport_icao)
             .where(fs.flight_state_id == Parameter('%s'))
         )
-        
+
         sql_string = query.get_sql()
         result = db.execute_sql(sql_string, (flight_state_id,))
 
