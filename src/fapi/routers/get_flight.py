@@ -71,13 +71,28 @@ class Get_Flight:
         }
 
     def get_flight_row(self, flight_state_id, db: Database):
-        query = """
-            SELECT * 
-            FROM flight_state fs 
-            LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
-            LEFT JOIN weather_state ws ON a.airport_icao = ws.airport_icao 
-            WHERE fs.flight_state_id = %s
-        """
-        result = db.execute_sql(query, (flight_state_id,))
+        # SQL:
+        # SELECT * 
+        # FROM flight_state fs 
+        # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
+        # LEFT JOIN weather_state ws ON a.airport_icao = ws.airport_icao 
+        # WHERE fs.flight_state_id = %s
+        
+        fs = Table('flight_state').as_('fs')
+        a = Table('airport').as_('a')
+        ws = Table('weather_state').as_('ws')
+
+        query = (
+            Query.from_(fs)
+            .select('*')
+            .left_join(a)
+            .on(fs.airport_icao == a.airport_icao)
+            .left_join(ws)
+            .on(a.airport_icao == ws.airport_icao)
+            .where(fs.flight_state_id == Parameter('%s'))
+        )
+        
+        sql_string = query.get_sql()
+        result = db.execute_sql(sql_string, (flight_state_id,))
 
         return result

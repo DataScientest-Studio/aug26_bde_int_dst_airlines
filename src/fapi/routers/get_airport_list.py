@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from src.databases.databases import Database
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
-
+from pypika import Query, Table, functions as fn
 
 class Get_Airport_List:
     
@@ -12,7 +12,9 @@ class Get_Airport_List:
 
     def get_airport_list(self, db: Database = Depends(get_db)):
         rows = self.get_airport_rows(db)
-        max_count = self.get_airport_max_count(db)
+        raw_count = self.get_airport_max_count(db)
+
+        max_count = raw_count[0]["count"] if raw_count else 0
 
         airport_list = []
 
@@ -38,13 +40,24 @@ class Get_Airport_List:
         }
 
     def get_airport_rows(self, db: Database):
-        query = 'select * from airport'
-        result = db.execute_sql(query)
+        # SQL:
+        # select * from airport
+        
+        airport_table = Table('airport')
+        query = Query.from_(airport_table).select('*')
+        sql_string = query.get_sql()
+
+        result = db.execute_sql(sql_string)
 
         return result
 
     def get_airport_max_count(self, db: Database):
-        query = 'select count(*) from airport'
-        result = db.execute_sql(query)
+        # SQL:
+        # select count(*) from airport
+        airport_table = Table('airport')
+        query = Query.from_(airport_table).select(fn.Count('*').as_('count'))
+        sql_string = query.get_sql()
+
+        result = db.execute_sql(sql_string)
 
         return result

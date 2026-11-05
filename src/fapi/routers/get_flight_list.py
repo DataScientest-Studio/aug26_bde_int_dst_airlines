@@ -4,6 +4,7 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
+from pypika import Query, Table
 
 class Get_Flight_List:
     
@@ -66,15 +67,32 @@ class Get_Flight_List:
                 'airport': airport
             })
 
-        return flight_list
+        return {
+            'flight_list': flight_list
+        }
 
     def get_flight_rows(self, db: Database):
-        query = """
-            SELECT * 
-            FROM flight_state fs 
-            LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
-            LEFT JOIN weather_state ws ON a.airport_icao = ws.airport_icao
-        """
-        result = db.execute_sql(query)
+        # SQL:
+        # SELECT * 
+        # FROM flight_state fs 
+        # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
+        # LEFT JOIN weather_state ws ON a.airport_icao = ws.airport_icao
+        
+        fs = Table('flight_state').as_('fs')
+        a = Table('airport').as_('a')
+        ws = Table('weather_state').as_('ws')
+
+        query = (
+            Query.from_(fs)
+            .select('*')
+            .left_join(a)
+            .on(fs.airport_icao == a.airport_icao)
+            .left_join(ws)
+            .on(a.airport_icao == ws.airport_icao)
+        )
+
+        sql_string = query.get_sql()
+
+        result = db.execute_sql(sql_string)
 
         return result

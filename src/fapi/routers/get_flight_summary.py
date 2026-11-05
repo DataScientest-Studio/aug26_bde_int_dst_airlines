@@ -25,23 +25,75 @@ class Get_Flight_Summary:
         }
         
     def get_aircraft_in_the_air(self, db: Database):
-        query = 'select count(*) as count_on_ground from flight_state where on_ground = false'
+
+        # SQL:
+        # select count(*) as count_on_ground 
+        # from flight_state 
+        # where on_ground = false
+
+        flight_state = Table('flight_state')
+
+        query = (
+            Query.from_(flight_state)
+            .select(fn.Count('*').as_('count_on_ground'))
+            .where(flight_state.on_ground == False)
+        )
+
+        sql_string = query.get_sql()
         result = db.execute_sql(query)
 
         return result
     
     def get_count_flights(self, db: Database, date):
+        flight_state = Table('flight_state')
+
+        query = Query.from_(flight_state).select(fn.Count('*'))
+
         if date: 
-            query = 'SELECT count(*) FROM flight_state WHERE DATE(created_at) = %s'
-            result = db.execute_sql(query, (date,))
+            # SQL:
+            # SELECT count(*) 
+            # FROM flight_state 
+            # WHERE DATE(created_at) = %s
+
+            query = query.where(fn.Date(flight_state.created_at) == Parameter('%s'))
+            sql_string = query.get_sql()
+            result = db.execute_sql(sql_string, (date,))
         else: 
-            query = 'SELECT count(*) FROM flight_state WHERE DATE(created_at) = CURRENT_DATE'
-            result = db.execute_sql(query)
+            # SQL:
+            # SELECT count(*) 
+            # FROM flight_state 
+            # WHERE DATE(created_at) = CURRENT_DATE
+            
+            query = query.where(fn.Date(flight_state.created_at) == Field('CURRENT_DATE'))
+            sql_string = query.get_sql()
+            result = db.execute_sql(sql_string)
 
         return result
 
     def get_busiest_airport(self, db: Database):
-        query = 'SELECT a.iata FROM flight_state fs JOIN airport a ON fs.airport_icao = a.airport_icao GROUP BY a.iata ORDER BY count(*) DESC LIMIT 1'
-        result = db.execute_sql(query)
+        # SQL:
+        # SELECT a.iata 
+        # FROM flight_state fs 
+        # JOIN airport a 
+        # ON fs.airport_icao = a.airport_icao 
+        # GROUP BY a.iata 
+        # ORDER BY count(*) DESC 
+        # LIMIT 1'
+
+        fs = Table('flight_state').as_('fs')
+        a = Table('airport').as_('a')
+
+        query = (
+            Query.from_(fs)
+            .join(a)
+            .on(fs.airport_icao == a.airport_icao)
+            .select(a.iata)
+            .groupby(a.iata)
+            .orderby(fn.Count('*'), order=Order.desc)
+            .limit(1)
+        )
+        
+        sql_string = query.get_sql()
+        result = db.execute_sql(sql_string)
 
         return result
