@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from src.databases.databases import Database
 from src.databases.dependencies.get_database import get_db
+from pypika import Query, Table, Order, functions as fn, Parameter, Field
 
 class Get_Flight_Summary:
     
@@ -40,7 +41,7 @@ class Get_Flight_Summary:
         )
 
         sql_string = query.get_sql()
-        result = db.execute_sql(query)
+        result = db.execute_sql(sql_string)
 
         return result
     
@@ -63,7 +64,7 @@ class Get_Flight_Summary:
             # SELECT count(*) 
             # FROM flight_state 
             # WHERE DATE(created_at) = CURRENT_DATE
-            
+
             query = query.where(fn.Date(flight_state.created_at) == Field('CURRENT_DATE'))
             sql_string = query.get_sql()
             result = db.execute_sql(sql_string)
