@@ -12,10 +12,10 @@ class Get_Flight_List:
         self.router = APIRouter()
         self.router.add_api_route("/get_flight_list", self.get_flight_list, methods=["GET"])
 
-    def get_flight_list(self, db: Database = Depends(get_db)):
+    def get_flight_list(self, limit=10, offset=0, db: Database = Depends(get_db)):
 
 
-        flight_data = self.get_flight_rows(db)
+        flight_data = self.get_flight_rows(db, limit, offset)
 
         flight_list = []
 
@@ -71,7 +71,7 @@ class Get_Flight_List:
             'flight_list': flight_list
         }
 
-    def get_flight_rows(self, db: Database):
+    def get_flight_rows(self, db: Database, limit, offset):
         # SQL:
         # SELECT * 
         # FROM flight_state fs 
@@ -89,6 +89,8 @@ class Get_Flight_List:
             .on(fs.airport_icao == a.airport_icao)
             .left_join(ws)
             .on(a.airport_icao == ws.airport_icao)
+            .limit(limit)
+            .offset(offset)
         )
 
         sql_string = query.get_sql()
