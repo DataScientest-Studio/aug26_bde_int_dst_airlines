@@ -1,5 +1,6 @@
 from dash import html, Input, Output
 from datetime import datetime
+import requests
 
 # unsere App aus app.py (damit die Callbacks wissen, zu welcher App sie gehören)
 from app import app
@@ -46,12 +47,16 @@ def update_dashboard(airline, search, date):
     else:
         message = ""
 
-    # Kachel 1: Flüge zählen
-    number_of_flights = len(selected_flights)
+    # BOX 1-3: get data from Backend
+    url = "http://127.0.0.1:8000/get_flight_summary?date=" + date
+    response = requests.get(url)
+    summary = response.json()
 
-    # Kachel 2, 3 und 4: Platzhalter, kommen später aus dem Backend
-    in_air = "tbd"
-    busiest = "tbd"
+    number_of_flights = summary["flights_today"]
+    in_air = summary["aircraft_in_the_air"]
+    busiest = summary["busiest_airport"]
+
+    # Kachel 4: kommt später
     duration = "tbd"
 
     # gleiche Reihenfolge wie die Outputs
