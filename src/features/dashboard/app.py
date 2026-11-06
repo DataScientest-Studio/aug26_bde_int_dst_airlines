@@ -9,7 +9,7 @@ app = Dash(__name__)
 # see data.py
 
 
-# ===== Layout: =====
+# ===== Layout:: =====
 app.layout = html.Div(
     children=[
         dcc.Interval(
@@ -27,43 +27,7 @@ app.layout = html.Div(
                         html.P(id="last-update", className="subtitle"),
                     ],
                 ),
-                html.Div(
-                    children=[
-                        # Filter 1: Airline
-                        html.Div(
-                            children=[
-                                html.Label("Airline"),
-                                dcc.Dropdown(
-                                    id="filter-airline",
-                                    options=[
-                                        "All airlines",
-                                        "Lufthansa",
-                                        "Swiss",
-                                        "Austrian",
-                                    ],
-                                    value="All airlines",
-                                ),
-                            ],
-                            style={"width": "250px"},
-                        ),
-                        # Filter 2: Datum
-                        html.Div(
-                            children=[
-                                html.Label("Date"),
-                                dcc.DatePickerSingle(
-                                    id="filter-date", date="2026-10-30"
-                                ),
-                            ],
-                        ),
-                    ],
-                    style={"display": "flex", "gap": "20px"},  # Filter nebeneinander
-                ),
             ],
-            style={
-                "display": "flex",  # Titel und Filter nebeneinander
-                "justify-content": "space-between",  # Titel links, Filter rechts
-                "align-items": "center",  # gleiche Höhe
-            },
         ),
         # Row with 3 Fields :
         html.Div(
@@ -105,13 +69,51 @@ app.layout = html.Div(
                 html.Div(
                     className="tile",
                     children=[
-                        html.H3("Flights"),  # titel der Box
-                        # search field for aircraft
-                        dcc.Input(
-                            id="search-icao24",
-                            type="text",
-                            placeholder="Search icao24 no., e.g. 3c6444",
-                            className="search-box",
+                        html.H3("Flights"),  # Box titel
+                        # filter for aircraft, Airline, and date side by side
+                        html.Div(
+                            className="filter-row",
+                            children=[
+                                # Suche nach icao24
+                                html.Div(
+                                    children=[
+                                        html.Label("Search"),
+                                        dcc.Input(
+                                            id="search-icao24",
+                                            type="text",
+                                            placeholder="Search icao24 no., e.g. 3c6444",
+                                            className="search-box",
+                                        ),
+                                    ],
+                                ),
+                                # Filter 1: Airline
+                                html.Div(
+                                    children=[
+                                        html.Label("Airline"),
+                                        dcc.Dropdown(
+                                            id="filter-airline",
+                                            options=[
+                                                "All airlines",
+                                                "Lufthansa",
+                                                "Swiss",
+                                                "Austrian",
+                                            ],
+                                            value="All airlines",
+                                        ),
+                                    ],
+                                    style={"width": "180px"},
+                                ),
+                                # Filter 2: Datum
+                                html.Div(
+                                    children=[
+                                        html.Label("Date"),
+                                        dcc.DatePickerSingle(
+                                            id="filter-date", date="2026-10-31"
+                                        ),
+                                    ],
+                                    style={"width": "140px"},
+                                ),
+                            ],
                         ),
                         html.P(id="no-flights-message"),
                         # Flights table

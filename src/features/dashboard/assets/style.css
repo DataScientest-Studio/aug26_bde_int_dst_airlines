@@ -60,11 +60,11 @@ body {
 
 /* Suchfeld: zb icao24 */
 .search-box {
-    width: 280px;
+    width: 220px;
     padding: 8px 10px;
     border: 1px solid #dddddd;
     border-radius: 6px;
-    margin-bottom: 15px;
+    margin-bottom: 0;
 }
 
 /*Zeile design für Flug Box*/
@@ -72,4 +72,20 @@ body {
     display: flex;
     justify-content: space-between;
     margin-top: 8px;
+}
+
+/*all filters side by side */
+.filter-row {
+    display: flex;            /* children side by side*/
+    gap: 20px;                
+    align-items: flex-end;    
+    margin-bottom: 15px;      
+}
+
+/* Labelling for filter */
+.filter-row label {
+    display: block;           
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 4px;
 }
