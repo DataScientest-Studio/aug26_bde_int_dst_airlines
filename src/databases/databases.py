@@ -1,0 +1,30 @@
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+class Database:
+    def __init__(self):
+        load_dotenv()
+        self.dbconnection = self.create_db_connection()
+
+    def create_db_connection(self):
+        return psycopg2.connect(
+            database=os.environ["AIRLINES_DB_NAME"],
+            host=os.environ["AIRLINES_DB_HOST"],
+            user=os.environ["AIRLINES_DB_USER"],
+            password=os.environ["AIRLINES_DB_PASSWORD"],
+            port=os.environ["AIRLINES_DB_PORT"]
+        )
+
+    def execute_sql(self, query, params=None):
+        with self.dbconnection.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, params)
+            return cur.fetchall()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.dbconnection:
+            self.dbconnection.close()
