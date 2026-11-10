@@ -18,31 +18,14 @@ content = html.Div(
                             children=[
                                 html.Label("Search"),
                                 dcc.Input(
-                                    id="search-icao24",
+                                    id="search-callsign",
                                     type="text",
-                                    placeholder="Search icao24 no., e.g. 3c6444",
+                                    placeholder="Search callsign, e.g. DLH123",
                                     className="search-box",
                                 ),
                             ],
                         ),
-                        # Filter 1: Airline
-                        html.Div(
-                            children=[
-                                html.Label("Airline"),
-                                dcc.Dropdown(
-                                    id="filter-airline",
-                                    options=[
-                                        "All airlines",
-                                        "Lufthansa",
-                                        "Swiss",
-                                        "Austrian",
-                                    ],
-                                    value="All airlines",
-                                ),
-                            ],
-                            style={"width": "180px"},
-                        ),
-                        # Filter 2: Datum
+                        # Filter: Datum
                         html.Div(
                             children=[
                                 html.Label("Date"),
@@ -114,7 +97,7 @@ content = html.Div(
                 # Box 2:
                 html.Div(
                     children=[
-                        html.H3("Weather: "),
+                        html.H3("Weather at airport"),
                         html.Div(id="weather-box"),
                     ],
                     className="tile",

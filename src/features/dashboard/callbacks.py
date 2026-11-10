@@ -18,11 +18,10 @@ from data import FLIGHT_LIST, build_table_rows
     Output("kpi-duration", "children"),
     Output("flights-table", "data"),
     Output("no-flights-message", "children"),
-    Input("filter-airline", "value"),
-    Input("search-icao24", "value"),
+    Input("search-callsign", "value"),
     Input("filter-date", "date"),
 )
-def update_dashboard(airline, search, date):
+def update_dashboard(search, date):
 
     # searchbox is empty?
     if search is None:
@@ -101,7 +100,7 @@ def show_selected_flight(active_cell, rows):
     # content for Box 2:
 
     info_box_2 = [
-        html.P("City: "),
+        html.P("City "),
         html.H2(flight["city"]),
         html.Div(
             className="row",
