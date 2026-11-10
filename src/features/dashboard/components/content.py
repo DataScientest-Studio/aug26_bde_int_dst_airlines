@@ -62,15 +62,16 @@ content = html.Div(
                     sort_action="native",
                     page_size=10,
                     columns=[
-                        {"name": "Flight", "id": "flight"},
-                        {"name": "Airline", "id": "airline"},
-                        {"name": "From", "id": "from"},
-                        {"name": "To", "id": "to"},
-                        {"name": "Departure", "id": "departure"},
-                        {"name": "Arrival", "id": "arrival"},
+                        # content from data.py
+                        {"name": "Callsign", "id": "callsign"},
                         {"name": "Status", "id": "status"},
-                        {"name": "ICAO24", "id": "icao24"},
-                        {"name": "Date", "id": "date"},
+                        {"name": "Altitude (m)", "id": "altitude"},
+                        {"name": "Speed (km/h)", "id": "speed"},
+                        {"name": "Airport", "id": "airport"},
+                        {"name": "City", "id": "city"},
+                        {"name": "Last contact", "id": "last_contact"},
+                        {"name": "Temp (°C)", "id": "temp"},
+                        {"name": "Weather", "id": "weather"},
                     ],
                     style_header={
                         "backgroundColor": "white",
@@ -110,16 +111,16 @@ content = html.Div(
                     ],
                     className="tile",
                 ),
-                # Box 2: Wetter am Zielflughafen
+                # Box 2:
                 html.Div(
                     children=[
-                        html.H3("Weather at destination"),
+                        html.H3("Weather: "),
                         html.Div(id="weather-box"),
                     ],
                     className="tile",
                 ),
             ],
-            style={"flex": "1"},  # 1 Teil breit
+            style={"flex": "1"},
         ),
     ],
     style={"display": "flex", "gap": "20px", "margin-top": "20px"},

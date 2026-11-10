@@ -1,194 +1,93 @@
 # ===== data.py: alle Daten  =====
 
+# Testdata in same forme of API (flight_list) \src\fapi\models
+# 3 parts: flight, airport und weather
+# later will be replaced ----> API-Aufruf
+from datetime import datetime
 
-# Beispiel-Flüge (15 --> 31.10., 1 --> am 01.11.)
-FLIGHTS = [
+FLIGHT_LIST = [
     {
-        "flight": "LH400",
-        "airline": "Lufthansa",
-        "from": "FRA",
-        "to": "JFK",
-        "departure": "10:15",
-        "arrival": "13:05",
-        "status": "In the air",
-        "icao24": "3c6444",
-        "date": "2026-11-01",
+        # Part 1: flight data
+        "flight": {
+            "callsign": "DLH123",
+            "on_ground": False,  # False = in the air, True = am Boden
+            "baro_altitude": 10500,
+            "velocity": 230,  # velocity in m/s
+            "last_contact": 1762687500,  # Unix-Zeit
+        },
+        # Part 2: Airport data (Airport_model.py)
+        "airport": {
+            "icao": "EDDF",
+            "iata": "FRA",
+            "city": "Frankfurt",
+        },
+        # Part 3: Airport data (Airport_model.py)
+        "weather": {
+            "temp": 8.5,
+            "description": "broken clouds",
+        },
     },
     {
-        "flight": "LH123",
-        "airline": "Lufthansa",
-        "from": "MUC",
-        "to": "CDG",
-        "departure": "07:40",
-        "arrival": "09:20",
-        "status": "Landed",
-        "icao24": "391558",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LX318",
-        "airline": "Swiss",
-        "from": "ZRH",
-        "to": "LHR",
-        "departure": "11:30",
-        "arrival": "12:10",
-        "status": "In the air",
-        "icao24": "40621d",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "OS201",
-        "airline": "Austrian",
-        "from": "VIE",
-        "to": "MAD",
-        "departure": "16:45",
-        "arrival": "20:10",
-        "status": "Scheduled",
-        "icao24": "a80140",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LH902",
-        "airline": "Lufthansa",
-        "from": "FRA",
-        "to": "LHR",
-        "departure": "06:30",
-        "arrival": "07:15",
-        "status": "Landed",
-        "icao24": "3c6589",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LH2034",
-        "airline": "Lufthansa",
-        "from": "MUC",
-        "to": "FRA",
-        "departure": "08:05",
-        "arrival": "09:00",
-        "status": "Landed",
-        "icao24": "3c4b2a",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LX1072",
-        "airline": "Swiss",
-        "from": "ZRH",
-        "to": "FRA",
-        "departure": "07:20",
-        "arrival": "08:25",
-        "status": "Landed",
-        "icao24": "4b1805",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "OS111",
-        "airline": "Austrian",
-        "from": "VIE",
-        "to": "MUC",
-        "departure": "09:10",
-        "arrival": "10:05",
-        "status": "Landed",
-        "icao24": "440170",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LH1110",
-        "airline": "Lufthansa",
-        "from": "FRA",
-        "to": "MAD",
-        "departure": "10:40",
-        "arrival": "13:15",
-        "status": "In the air",
-        "icao24": "3c66b3",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LX638",
-        "airline": "Swiss",
-        "from": "ZRH",
-        "to": "CDG",
-        "departure": "12:15",
-        "arrival": "13:30",
-        "status": "In the air",
-        "icao24": "4b1901",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "OS403",
-        "airline": "Austrian",
-        "from": "VIE",
-        "to": "CDG",
-        "departure": "13:00",
-        "arrival": "15:05",
-        "status": "Scheduled",
-        "icao24": "440a2c",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LH2470",
-        "airline": "Lufthansa",
-        "from": "MUC",
-        "to": "LHR",
-        "departure": "14:20",
-        "arrival": "15:15",
-        "status": "Scheduled",
-        "icao24": "3c4dd7",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LX1574",
-        "airline": "Swiss",
-        "from": "ZRH",
-        "to": "VIE",
-        "departure": "15:30",
-        "arrival": "16:50",
-        "status": "Scheduled",
-        "icao24": "4b1a33",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "OS155",
-        "airline": "Austrian",
-        "from": "VIE",
-        "to": "ZRH",
-        "departure": "17:10",
-        "arrival": "18:35",
-        "status": "Scheduled",
-        "icao24": "440b91",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LH404",
-        "airline": "Lufthansa",
-        "from": "FRA",
-        "to": "JFK",
-        "departure": "18:00",
-        "arrival": "20:55",
-        "status": "Scheduled",
-        "icao24": "3c6475",
-        "date": "2026-10-31",
-    },
-    {
-        "flight": "LX40",
-        "airline": "Swiss",
-        "from": "ZRH",
-        "to": "MUC",
-        "departure": "19:25",
-        "arrival": "20:20",
-        "status": "Scheduled",
-        "icao24": "4b1c0e",
-        "date": "2026-10-31",
+        "flight": {
+            "callsign": "EWG45",
+            "on_ground": True,
+            "baro_altitude": 0,
+            "velocity": 0,
+            "last_contact": 1762687320,
+        },
+        "airport": {
+            "icao": "EDDK",
+            "iata": "CGN",
+            "city": "Köln",
+        },
+        "weather": {
+            "temp": 7.2,
+            "description": "clear sky",
+        },
     },
 ]
 
-# Beispiel-Wetter pro Zielflughafen
-WEATHER = {
-    "JFK": {"temp": 12, "condition": "Cloudy"},
-    "CDG": {"temp": 15, "condition": "Sunny"},
-    "LHR": {"temp": 10, "condition": "Rain"},
-    "MAD": {"temp": 22, "condition": "Sunny"},
-    "FRA": {"temp": 9, "condition": "Cloudy"},
-    "MUC": {"temp": 7, "condition": "Fog"},
-    "ZRH": {"temp": 8, "condition": "Rain"},
-    "VIE": {"temp": 11, "condition": "Sunny"},
-}
+
+# transform flight_list to flat rows for data flight table
+def build_table_rows(flight_list):
+    rows = []  # empty list
+    for entry in flight_list:
+        flight = entry["flight"]
+        airport = entry["airport"]
+        weather = entry["weather"]
+
+        # Status in the air / landed
+        if flight["on_ground"] == True:
+            status = "Landed"
+        else:
+            status = "In the air"
+
+        # airport - can be null/empty ---> iata most known
+        if airport["iata"]:
+            airport_code = airport["iata"]
+        else:
+            airport_code = airport["icao"]
+
+        # Velocity in km/h
+        speed_kmh = round(flight["velocity"] * 3.6)
+
+        # unix time ---> real time
+        last_contact = datetime.fromtimestamp(flight["last_contact"]).strftime("%H:%M")
+
+        row = {
+            "callsign": flight["callsign"],
+            "status": status,
+            "altitude": flight["baro_altitude"],
+            "speed": speed_kmh,
+            "airport": airport_code,
+            "city": airport["city"],
+            "last_contact": last_contact,
+            "temp": weather["temp"],
+            "weather": weather["description"],
+        }
+        # add the row to the list
+        rows.append(row)
+    return rows
+
+
+# print(build_table_rows(FLIGHT_LIST))

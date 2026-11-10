@@ -6,7 +6,7 @@ import requests
 from app import app
 
 # Beispieldaten aus data.py
-from data import FLIGHTS, WEATHER
+from data import FLIGHT_LIST, build_table_rows
 
 
 # ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
@@ -24,24 +24,20 @@ from data import FLIGHTS, WEATHER
 )
 def update_dashboard(airline, search, date):
 
+    # searchbox is empty?
     if search is None:
         search = ""
+    # data from data.py to table rows
+    rows = build_table_rows(FLIGHT_LIST)
+
+    # content/result
     selected_flights = []
 
-    for flight in FLIGHTS:
-        if flight["date"] == date:
-            # Fall 1: Suchfeld leer --> nur nach Airline filtern
-            if search == "":
-                if airline == "All airlines":
-                    selected_flights.append(flight)
-                else:
-                    if flight["airline"] == airline:
-                        selected_flights.append(flight)
-            # Fall 2: nach icao24 suchen
-            else:
-                if search in flight["icao24"]:
-                    selected_flights.append(flight)
+    for row in rows:
+        if search.upper() in row["callsign"].upper():
+            selected_flights.append(row)
 
+    # no result ---> show message
     if len(selected_flights) == 0:
         message = "No flights found for this filter."
     else:
@@ -63,7 +59,7 @@ def update_dashboard(airline, search, date):
     return number_of_flights, in_air, busiest, duration, selected_flights, message
 
 
-# ===== Callback 2: Zeile anklicken --> Details anzeigen =====
+# ===== Callback 2: selct row--> show details  =====
 @app.callback(
     Output("selected-flight", "children"),
     Output("weather-box", "children"),
@@ -81,56 +77,43 @@ def show_selected_flight(active_cell, rows):
     # Den Flug aus dieser Zeile holen
     flight = rows[row_number]
 
-    # Inhalt für Box 1: der Flug
-    flight_text = [
-        html.P("Flight number"),
-        html.H2(flight["flight"]),
+    # content for Box 1:
+    info_box_1 = [
+        html.P("Flight number (Callsign)"),
+        html.H2(flight["callsign"]),
         html.Div(
-            className="row",
-            children=[
-                html.Div(
-                    children=[
-                        html.P("Departure"),
-                        html.B(flight["from"] + " · " + flight["departure"]),
-                    ],
-                ),
-                html.Div(
-                    children=[
-                        html.P("Arrival"),
-                        html.B(flight["to"] + " · " + flight["arrival"]),
-                    ],
-                    style={"text-align": "right"},
-                ),
-            ],
+            className="row", children=[html.P("Status"), html.P(flight["status"])]
         ),
-        # Zeile 2: Airline
         html.Div(
             className="row",
-            children=[html.P("Airline"), html.P(flight["airline"])],
+            children=[html.P("Altitude"), html.P(str(flight["altitude"]) + " m")],
         ),
-        # Zeile 3: Status
         html.Div(
             className="row",
-            children=[html.P("Status"), html.P(flight["status"])],
+            children=[html.P("Speed"), html.P(str(flight["speed"]) + " km/h")],
+        ),
+        html.Div(
+            className="row",
+            children=[html.P("Last contact"), html.P(flight["last_contact"])],
         ),
     ]
 
-    # Das Wetter am Zielflughafen holen
-    destination = flight["to"]
-    weather = WEATHER[destination]
+    # content for Box 2:
 
-    # Inhalt für Box 2: das Wetter
-    weather_text = [
-        html.P(destination),
-        html.H2(str(weather["temp"]) + " °C"),
+    info_box_2 = [
+        html.P("City: "),
+        html.H2(flight["city"]),
         html.Div(
             className="row",
-            children=[html.P("Conditions"), html.P(weather["condition"])],
+            children=[html.P("Temperature"), html.P(str(flight["temp"]) + " °C")],
+        ),
+        html.Div(
+            className="row", children=[html.P("Condition"), html.P(flight["weather"])]
         ),
     ]
 
     # zwei Outputs, also zwei Werte, gleiche Reihenfolge
-    return flight_text, weather_text
+    return info_box_1, info_box_2
 
 
 # ===== Callback 3: Uhrzeit der letzten Aktualisierung =====
