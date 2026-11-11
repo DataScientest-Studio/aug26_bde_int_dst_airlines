@@ -1,12 +1,25 @@
 import json
-from psycopg2.extras import Json
+import sys
+import logging
+import psycopg2
 from datetime import datetime, timezone
 from pathlib import Path
 
 from src.databases.databases import Database
 from src.data.common.storage import BASE_DIR
 
+# format of raw jsons
 FILENAME_FORMAT = "%Y-%m-%dT%H%M%S%fZ"
+
+# logging: similar to collectors
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    stream=sys.stdout
+)
+
+logger = logging.getLogger(__name__)
+
 
 def discover_raw_files():
     return sorted(
@@ -51,6 +64,7 @@ def load_payload(path):
     with path.open(encoding="utf-8") as file:
         return json.load(file)
 
+# insertion of raw json into ingestion.raw_snapshot
 def register_snapshot(db, metadata, payload):
     query = """
         insert into ingestion.raw_snapshot (
@@ -72,7 +86,7 @@ def register_snapshot(db, metadata, payload):
         metadata['airport_icao'],
         metadata['collected_at'],
         metadata['raw_file_path'],
-        Json(payload)
+        psycopg2.extras.Json(payload)
     )
 
     rows = db.execute_sql(query, params)
@@ -92,3 +106,47 @@ def register_snapshot(db, metadata, payload):
     )
 
     return existing_rows[0]['snapshot_id'], False
+
+# per-file processing: if db insert fails, we roll back for one file
+def process_raw_file(db, path):
+    metadata = parse_raw_file_metadata(path)
+    payload = load_payload(path)
+
+    with db.dbconnection:
+        snapshot_id, inserted = register_snapshot(db, metadata, payload)
+
+    return snapshot_id, inserted
+
+def main():
+    files = discover_raw_files()
+
+    inserted_count = 0
+    existing_count = 0
+    failures = []
+
+    logger.info("Starting raw-snapshot registration | files=%s", len(files))
+
+    with Database() as db:
+        for path in files:
+            try:
+                snapshot_id, inserted = process_raw_file(db, path)
+
+                if inserted:
+                    inserted_count += 1
+                    logger.info("REGISTERED | snapshot_id=%s | file=%s", snapshot_id, path.relative_to(BASE_DIR))
+                else:
+                    existing_count += 1
+                    logger.info("ALREADY REGISTERED | snapshot_id=%s | file=%s", snapshot_id, path.relative_to(BASE_DIR))
+
+            except psycopg2.Error:
+                logger.exception("FAILED | file=%s", path.relative_to(BASE_DIR))
+                failures.append(path)
+
+        logger.info("Raw-snapshot registration complete | discovered=%s | inserted=%s | already_registered=%s | failed=%s",
+                    len(files), inserted_count, existing_count, len(failures))
+
+        if failures:
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main()

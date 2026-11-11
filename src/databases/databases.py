@@ -27,6 +27,12 @@ class Database:
     def execute_sql(self, query, params=None):
         with self.dbconnection.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(query, params)
+
+            # if a query doesn't return anything (i.e. write-only), 
+            # fetchall will make Pastgres to raise "no results to fetch"
+            if cur.description is None:
+                return []
+            
             return cur.fetchall()
 
     def __enter__(self):
