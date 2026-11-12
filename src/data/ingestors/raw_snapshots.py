@@ -117,7 +117,7 @@ def process_raw_file(db, path):
 
     return snapshot_id, inserted
 
-def main():
+def run_raw_snapshot_registration():
     files = discover_raw_files()
 
     inserted_count = 0
@@ -138,15 +138,27 @@ def main():
                     existing_count += 1
                     logger.info("ALREADY REGISTERED | snapshot_id=%s | file=%s", snapshot_id, path.relative_to(BASE_DIR))
 
-            except psycopg2.Error:
+            except (json.JSONDecodeError, psycopg2.Error):
                 logger.exception("FAILED | file=%s", path.relative_to(BASE_DIR))
                 failures.append(path)
 
         logger.info("Raw-snapshot registration complete | discovered=%s | inserted=%s | already_registered=%s | failed=%s",
                     len(files), inserted_count, existing_count, len(failures))
 
-        if failures:
-            sys.exit(1)
+    return {
+        'discovered': len(files),
+        'registered': inserted_count,
+        'already_registered': existing_count,
+        'failed': len(failures)
+    }
+
+
+def main():
+    result = run_raw_snapshot_registration()
+
+    if result['failed']:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -174,7 +174,7 @@ def normalise_openweather_snapshot(db, snapshot):
 
 
 # batch processing
-def main():
+def run_openweather_normalisation():
     normalised_count = 0
     existing_count = 0
     failed_count = 0
@@ -215,8 +215,19 @@ def main():
     logger.info("OpenWeather normalisation complete | normalised=%s | already_normalised=%s | failed=%s",
                 normalised_count, existing_count, failed_count)
 
-    if failed_count:
+    return {
+        'normalised': normalised_count,
+        'already_normalised': existing_count,
+        'failed': failed_count
+    }
+
+
+def main():
+    result = run_openweather_normalisation()
+
+    if result['failed']:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

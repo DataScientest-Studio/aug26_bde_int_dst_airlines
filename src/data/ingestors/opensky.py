@@ -271,7 +271,7 @@ def normalise_opensky_snapshot(db, snapshot):
     return inserted_count, existing_count
 
 
-def main():
+def run_opensky_normalisation():
     normalised_snapshots = 0
     inserted_states = 0
     existing_states = 0
@@ -293,7 +293,7 @@ def main():
                 with db.dbconnection:
                     inserted, existing = normalise_opensky_snapshot(db, snapshot)
 
-            except (ValueError, psycopg2.Error) as exc:
+            except (TypeError, ValueError, psycopg2.Error) as exc:
                 logger.exception("FAILED | snapshot_id=%s", snapshot_id)
 
                 # start new transaction (previous rolled back) to save error message
@@ -313,7 +313,18 @@ def main():
     logger.info("OpenSky normalisation complete | snapshots=%s | inserted_states=%s | existing_states=%s | failed=%s",
                 normalised_snapshots, inserted_states, existing_states, failed_snapshots)
 
-    if failed_snapshots:
+    return {
+        'normalised_snapshots': normalised_snapshots,
+        'inserted_states': inserted_states,
+        'existing_states': existing_states,
+        'failed': failed_snapshots
+    }
+
+
+def main():
+    result = run_opensky_normalisation()
+
+    if result['failed']:
         sys.exit(1)
 
 
