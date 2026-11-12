@@ -152,7 +152,7 @@ def mark_snapshot_failed(db, snapshot_id, error):
 
     db.execute_sql(
         """
-        update ingestion.raw_sanpshot
+        update ingestion.raw_snapshot
         set normalisation_error = %s
         where snapshot_id = %s;
         """,
@@ -207,7 +207,7 @@ def main():
 
                 # failed normalisation transaction rolled back;
                 # start a separate transaction to record the error
-                with db.connection:
+                with db.dbconnection:
                     mark_snapshot_failed(db, snapshot_id, exc)
 
                 failed_count += 1

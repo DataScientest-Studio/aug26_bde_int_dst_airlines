@@ -3,4 +3,4 @@ to respect dependencies between tables follow the order of creation:
 2. 2_ingestion_schema.sql
 3. 3_tables_constraints_indexes.sql
 4. 4_weather_normalisation.sql
-
+5. 5_opensky_normalisation.sql
