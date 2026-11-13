@@ -6,6 +6,10 @@ from datetime import datetime, timezone
 from src.databases.databases import Database
 
 
+# default limit for files per batch for the module
+DEFAULT_SNAPSHOT_BATCH_SIZE = 100
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -271,21 +275,23 @@ def normalise_opensky_snapshot(db, snapshot):
     return inserted_count, existing_count
 
 
-def run_opensky_normalisation():
+def run_opensky_normalisation(max_snapshots=DEFAULT_SNAPSHOT_BATCH_SIZE):
     normalised_snapshots = 0
     inserted_states = 0
     existing_states = 0
     failed_snapshots = 0
+    attempted_count = 0
 
     logger.info("Starting OpenSky normalisation")
 
     with Database() as db:
-        while True:
+        while (max_snapshots is None or attempted_count < max_snapshots):
             snapshot = fetch_next_pending_snapshot(db)
 
             if snapshot is None:
                 break
 
+            attempted_count += 1
             snapshot_id = snapshot['snapshot_id']
 
             try:
@@ -310,10 +316,11 @@ def run_opensky_normalisation():
             logger.info("NORMALISED | snapshot_id=%s | inserted=%s | existing=%s",
                         snapshot_id, inserted, existing)
 
-    logger.info("OpenSky normalisation complete | snapshots=%s | inserted_states=%s | existing_states=%s | failed=%s",
-                normalised_snapshots, inserted_states, existing_states, failed_snapshots)
+    logger.info("OpenSky normalisation complete | attempted=%s | snapshots=%s | inserted_states=%s | existing_states=%s | failed=%s",
+                attempted_count, normalised_snapshots, inserted_states, existing_states, failed_snapshots)
 
     return {
+        'attempted': attempted_count,
         'normalised_snapshots': normalised_snapshots,
         'inserted_states': inserted_states,
         'existing_states': existing_states,

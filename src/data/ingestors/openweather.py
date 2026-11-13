@@ -5,6 +5,9 @@ from datetime import datetime, timezone
 
 from src.databases.databases import Database
 
+# module-level default limit
+DEFAULT_SNAPSHOT_BATCH_SIZE = 100
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -174,20 +177,22 @@ def normalise_openweather_snapshot(db, snapshot):
 
 
 # batch processing
-def run_openweather_normalisation():
+def run_openweather_normalisation(max_snapshots=DEFAULT_SNAPSHOT_BATCH_SIZE):
     normalised_count = 0
     existing_count = 0
     failed_count = 0
+    attempted_count = 0
 
     logger.info("Starting OpenWeather normalisation")
 
     with Database() as db:
-        while True:
+        while (max_snapshots is None or attempted_count < max_snapshots):
             snapshot = fetch_next_pending_snapshot(db)
 
             if snapshot is None:
                 break
 
+            attempted_count += 1
             snapshot_id = snapshot['snapshot_id']
 
             try:
@@ -212,10 +217,11 @@ def run_openweather_normalisation():
 
                 failed_count += 1
 
-    logger.info("OpenWeather normalisation complete | normalised=%s | already_normalised=%s | failed=%s",
-                normalised_count, existing_count, failed_count)
+    logger.info("OpenWeather normalisation complete | attempted=%s | normalised=%s | already_normalised=%s | failed=%s",
+                attempted_count, normalised_count, existing_count, failed_count)
 
     return {
+        'attempted': attempted_count,
         'normalised': normalised_count,
         'already_normalised': existing_count,
         'failed': failed_count
