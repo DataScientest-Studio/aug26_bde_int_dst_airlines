@@ -61,25 +61,40 @@ def upsert_aircraft(db, state_vector):
     return rows[0]['aircraft_icao24']
 
 
-def upsert_position_source(db, source_code):
+# get the known position sources with codes, error on mismatch
+def load_position_source_ids(db):
+    # retrieve known position sources
+    rows = db.execute_sql(
+        """
+        select opensky_code, position_source_id
+        from public.position_source
+        where opensky_code = any(%s);
+        """,
+        (list(POSITION_SOURCES),)
+    )
+
+    # make a map out of result
+    position_source_ids = {
+        row["opensky_code"]: row["position_source_id"] for row in rows
+    }
+
+    missing_codes = set(POSITION_SOURCES) - set(position_source_ids)
+
+    if missing_codes:
+        raise RuntimeError(f"Missing position-source rows for codes: {sorted(missing_codes)}")
+
+    return position_source_ids
+
+
+# in-memory check of the source_code for each aircraft state, no db requests
+def get_position_source_id(position_source_ids, source_code):
     if source_code is None:
         return None
-
+ 
     if source_code not in POSITION_SOURCES:
         raise ValueError(f"Unknown OpenSky position source code: {source_code}")
 
-    rows = db.execute_sql(
-        """
-        insert into public.position_source (opensky_code, position_source_val)
-        values (%s, %s)
-        on conflict (opensky_code) do update
-        set position_source_val = excluded.position_source_val
-        returning position_source_id;
-        """,
-        (source_code, POSITION_SOURCES[source_code])
-    )
-
-    return rows[0]['position_source_id']
+    return position_source_ids[source_code]
 
 
 # no description of squawk codes supported here
@@ -152,7 +167,7 @@ def clean_callsign(value):
 
 
 # process one state vector
-def insert_flight_state(db, snapshot, state_vector):
+def insert_flight_state(db, snapshot, state_vector, position_source_ids):
     if len(state_vector) <= POSITION_SOURCE_INDEX:
         raise ValueError("OpenSky state vector is incomplete")
 
@@ -160,7 +175,7 @@ def insert_flight_state(db, snapshot, state_vector):
         raise ValueError("OpenSky state vector has no on_ground value")
 
     aircraft_icao24 = upsert_aircraft(db, state_vector)
-    position_source_id = upsert_position_source(db, state_vector[POSITION_SOURCE_INDEX])
+    position_source_id = get_position_source_id(position_source_ids, state_vector[POSITION_SOURCE_INDEX])
     squawk_id = upsert_squawk(db, state_vector[SQUAWK_INDEX])
 
     rows = db.execute_sql(
@@ -247,7 +262,7 @@ def mark_snapshot_failed(db, snapshot_id, error):
     )
 
 # process all aircrafts from one raw json
-def normalise_opensky_snapshot(db, snapshot):
+def normalise_opensky_snapshot(db, snapshot, position_source_ids):
     state_vectors = snapshot['payload'].get('states')
 
     if state_vectors is None:
@@ -263,7 +278,7 @@ def normalise_opensky_snapshot(db, snapshot):
         if not isinstance(state_vector, list):
             raise ValueError("OpenSky payload contains an invalid state vector")
 
-        _, inserted = insert_flight_state(db, snapshot, state_vector)
+        _, inserted = insert_flight_state(db, snapshot, state_vector, position_source_ids)
 
         if inserted:
             inserted_count += 1
@@ -285,6 +300,10 @@ def run_opensky_normalisation(max_snapshots=DEFAULT_SNAPSHOT_BATCH_SIZE):
     logger.info("Starting OpenSky normalisation")
 
     with Database() as db:
+        position_source_ids = load_position_source_ids(db)
+
+        logger.info("Loaded position-source mapping | mappings=%s", position_source_ids)
+
         while (max_snapshots is None or attempted_count < max_snapshots):
             snapshot = fetch_next_pending_snapshot(db)
 
@@ -297,7 +316,7 @@ def run_opensky_normalisation(max_snapshots=DEFAULT_SNAPSHOT_BATCH_SIZE):
             try:
                 # all aircraft from one raw response are handled in one transaction
                 with db.dbconnection:
-                    inserted, existing = normalise_opensky_snapshot(db, snapshot)
+                    inserted, existing = normalise_opensky_snapshot(db, snapshot, position_source_ids)
 
             except (TypeError, ValueError, psycopg2.Error) as exc:
                 logger.exception("FAILED | snapshot_id=%s", snapshot_id)
