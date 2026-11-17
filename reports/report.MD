@@ -77,20 +77,51 @@ reports/database_documentation.md:
 reports/figures/er_diagram.png:
   - The visual Entity-Relationship
 
-## deleted folders/files:
+## API evaluation and source selection
 
-# APIs:
-- Lufthansa API:
-    - Disabled
-- OpenSky API: (in use)
-    - Fetch live flight data
-- AirFrance API:
-    - Didn't work
-- Cirium API:
-    - Provides data for only 14 days – not useful for us because we need live data
-- FlightStats API:
-    - Requested access, but only received credentials for Cirium API
-- Aviationstack API:
-    - Limited to 100 requests per month – not enough for our use case (fetching data for two airports daily requires ~120 requests/month)
-- OpenWeather API: (in use)
-    - Fetch weather data for the airports
+The original concept required both live aircraft positions and scheduled-flight data.
+Several APIs were evaluated before selecting the sources used in the current
+pipeline.
+
+### Air France--KLM Open Data
+
+A Flight Status API key was issued, but requests to the documented endpoint,
+including its required time-range parameters, returned HTTP 404 responses from
+the operational-flight route. The versioned route produced the same result. A
+support ticket was submitted but received no response. Air France--KLM data are
+therefore not used by the implemented pipeline.
+
+### Other evaluated APIs
+
+- **Lufthansa API:** deprecated and therefore unavailable for a new project.
+- **FlightStats:** access was requested, but the supplied credentials provided
+  Cirium Sky access instead.
+- **Cirium Sky:** the available access covered only a 14-day data window and
+  could not support the intended ongoing collection of live airport traffic.
+
+### Aviationstack
+
+Aviationstack was evaluated as a source of arrivals, departures, airline, and
+schedule data. A live-flight request returned 100 records per response and
+reported several thousand matching records, so complete retrieval requires
+pagination. The tested plan does not permit date filtering or historical
+requests: those requests returned `function_access_restricted`.
+
+The free plan is also limited to 100 requests per month. Even a minimal design
+that polls arrivals and departures for two airports daily would require about
+120 requests per month, before processing additional pages. It therefore cannot
+provide complete or timely schedule data for this project. The related database
+entities (`travel`, `airline`, and `status`) remain in the schema for possible
+future use with a suitable data source, but no Aviationstack collector or
+normaliser is currently active.
+
+### Selected sources
+
+- **OpenSky** is the primary source of live aircraft state vectors. It supplies
+  aircraft identifiers, position, altitude, velocity, direction, ground status,
+  and observation timestamps inside an airport-specific bounding box.
+- **OpenWeather** supplies current weather observations for each airport's
+  configured latitude and longitude.
+
+The project consequently focuses on observed air traffic around airports,
+rather than on a complete timetable or a commercial flight-tracking service.

@@ -3,8 +3,42 @@
 Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
 - DBMS: PostgreSQL
 
-## Schema Documentation:
-### OpenSkyAPI
+## Overview
+
+The project uses PostgreSQL (hosted on Supabase). The schema separates raw
+source lineage from dashboard-ready relational data:
+
+- 'ingestion' records every collected JSON snapshot and its processing status;
+- 'public' contains reference data and normalised OpenSky and OpenWeather
+  observations.
+
+Raw files remain on disk under 'data/raw'; their relative path and complete JSON
+payload are also registered in the database. This provides traceability from a
+dashboard observation back to its source response.
+
+## Schema Documentation
+
+### Raw ingestion and lineage
+
+**Schema** 'ingestion'; **table** 'raw_snapshot':
+
+- 'snapshot_id' **(PK) bigint identity**
+  Unique identifier for a collected response.
+- 'provider', 'resource', 'airport_icao', 'collected_at'
+  Identify the source, resource, airport, and UTC collection time.
+- 'source_observed_at' **timestamptz NULL**
+  Timestamp reported by the source, populated during normalisation when
+  available.
+- 'raw_file_path' **TEXT UNIQUE NOT NULL**
+  Relative path of the immutable raw JSON file. The unique constraint makes
+  registration idempotent.
+- 'payload' **JSONB NOT NULL**
+  Complete source response retained for replay and audit.
+- 'ingested_at', 'normalised_at', 'normalisation_error'
+  Track registration, successful normalisation, and the latest processing
+  failure respectively.
+
+### OpenSky data model
 **Table** timezone:
 - timezone_id **(PK) autoincrement NOT NULL**
     Description: Unique identifier for a timezone
@@ -25,7 +59,7 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
     Description: Unique identifier for an observation of a flight
 
 - airport_icao **(FK -> airport.airport_icao) NOT NULL**
-    Description: Foreign key referencing the aircraft
+    Description: Airport bounding box for which the aircraft state was collected
 
 - category_id **(FK -> category.category_id) NULL**
     Description: Foreign key referencing the category
@@ -78,16 +112,18 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
     Column in OpenSkyAPI: true_track -> float
     Description: True track in decimal degrees clockwise from north (north=0°)
 
-- vertical_rate **DECIMAL(4,2) NULL**
-    Description:
+- vertical_rate **DECIMAL(6,2) NULL**
+    Column in OpenSkyAPI: vertical_rate -> float
+    Description: Vertical speed in metres per second. The widened precision
+    accommodates typical climb and descent rates.
 
 - created_at **timestamptz NOT NULL** 
     Description: Time of api-call that collected the state
 
-- snapshot_id **(FK -> ingetsion.raw_snapshot.snapshot_id)**
+- snapshot_id **(FK -> ingestion.raw_snapshot.snapshot_id)**
     Description: tracking of the ingested jsonb object
 
-**Table** airport: manual maintainance, but we can get these data from the OpenWeatherAPI 
+**Table** airport: maintained from 'data/reference_data/airports.json'
 - airport_icao **(PK) char(4) NOT NULL**
     Description: ICAO of the airport
 
@@ -95,9 +131,8 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
     Description: name of the airport
 
 - iata **char(3) NULL**
-    Column in AviationStackAPI: data.airport.iata
-    Description: IATA code of the airport used for commercial flight routing
-    Comes from AviationStackAPI
+    Description: IATA code of the airport, supplied by the manually maintained
+    airport reference file.
 
 - city **TEXT NOT NULL**
     Description: city of the airport
@@ -129,32 +164,37 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
     Description: Key/PK of the category
 
 - category_val **TEXT NULL**
-    Column in OpenSkyAPI: category -> int
-    Description: Readable label of category
+    Description: Readable label of category. Category data are not present in
+    the current non-extended OpenSky state payload and are therefore NULL in the
+    implemented normalisation flow.
 
-**Table** position_source: 
-- position_source_id **(PK) integer NOT NULL**
+**Table** position_source:
+- position_source_id **(PK) smallint identity NOT NULL**
+    Description: Internal key of the position-source lookup.
+
+- opensky_code **smallint UNIQUE NULL**
     Column in OpenSkyAPI: position_source -> int
-    Description: Key/PK of the position_source
+    Description: OpenSky source code used to map a state vector to the lookup.
 
 - position_source_val **TEXT NULL**
-    Column in OpenSkyAPI: position_source -> int
-    Description: Readable label of position_source
+    Description: Readable label of the source, for example 'ADS_B', 'ASTERIX',
+    'MLAT', or 'FLARM'.
 
 **Table** squawk:
 - squawk_id **(PK) CHAR(4) NOT NULL**
     Column in OpenSkyAPI: squawk -> string
-    Description: Key/PK of the squawk (transponder code) only from ICAO, Germany and Europe
+    Description: Four-character transponder code when supplied by OpenSky.
 
 - squawk_val **TEXT NULL**
-    Column in OpenSkyAPI:  squawk -> string
-    Description: Readable label of squawk (transponder code) only from ICAO, Germany and Europe
+    Description: Optional readable description; it is not populated
+    automatically by the current pipeline.
 
 ### OpenWeatherAPI
 **Table** weather:
-- weather_id **(PK) INTEGER NOT NULL**
-    Column in OpenWeatherAPI: weather.id -> int
-    Description: Unique identifier of the weather
+- weather_id **(PK) SERIAL NOT NULL**
+    Description: Internal identifier of a distinct weather condition. It is not
+    the OpenWeather 'weather.id'; the condition is uniquely identified by its
+    icon, main label, and description.
 
 - icon_id **(FK -> icon.icon_id) NULL**
     Column in OpenWeatherAPI: weather.icon -> string
@@ -219,21 +259,25 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
 - snapshot_id **(FK -> ingestion.raw_snapshot(snapshot_id))**
     Description: ingestion tracking of raw jsonb object
 
-### AviationStackAPI (NYI)
+### Future schedule model (not implemented)
+
+The following entities were prepared for a possible schedule-data provider.
+They are not populated by the current collectors or normalisation pipeline.
+
 **TABLE** travel:
 - travel_id **(PK) autoincrement NOT NULL**
     Description: Unique identifier for a flight
     
-- departure_airport_icao **(FK-> airport.airport_icao) CHAR(4) NOT NULL**
+- departure_airport_icao **(FK-> airport.airport_icao) CHAR(4) NULL**
     Description: Foreign key referencing the departure airport
     
-- arrival_airport_icao **(FK-> airport.airport_icao) CHAR(4) NOT NULL**
+- arrival_airport_icao **(FK-> airport.airport_icao) CHAR(4) NULL**
     Description: Foreign key referencing the arrival airport
     
-- aircraft_icao24 **(FK-> aircraft.aircraft_icao24) CHAR(6) NOT NULL**
+- aircraft_icao24 **(FK-> aircraft.aircraft_icao24) CHAR(6) NULL**
     Description: Foreign key referencing the aircraft
     
-- airline_icao **(FK-> airline.airline_icao) CHAR(3) NOT NULL**
+- airline_icao **(FK-> airline.airline_icao) CHAR(3) NULL**
     Description: Foreign key referencing the airline 
     
 - travel_date **date NULL**
@@ -289,5 +333,30 @@ Store flight data from OpenSkyAPI and weather data from OpenWeatherAPI
     Column in AviationStackAPI: data.airline.iata 
     Description: iata commercial airline designation code
 
-# Entity-Relationship-Diagram
+## Constraints, indexes, and idempotency
+
+The schema validates airport coordinates and bounding-box ordering, weather
+cloudiness (0--100), and wind direction (0--360). Foreign keys preserve the
+relationship between observations, their lookup values, airports, and raw
+snapshots.
+
+The following constraints make normalisation repeatable:
+
+- 'raw_snapshot.raw_file_path' is unique;
+- 'weather(icon_id, main, description)' is unique;
+- 'weather_state.snapshot_id' is unique;
+- 'flight_state(snapshot_id, aircraft_icao24)' is unique.
+
+Indexes support the main dashboard and operational queries: aircraft states by
+airport/time and aircraft/time, weather states by airport/time, and raw
+snapshots by provider/airport/collection time.
+
+## Database creation and migrations
+
+Run the SQL files in numerical order. Files '1'--'3' create the foundational,
+ingestion, and observation tables; files '4' and '5' add normalisation
+constraints; file '6' contains the subsequent schema repair that widens
+'flight_state.vertical_rate' and seeds the OpenSky position-source lookup.
+
+## Entity-Relationship Diagram
 ![Datenbank ER-Diagramm](figures/er_diagram.png)
