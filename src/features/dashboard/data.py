@@ -4,6 +4,8 @@
 # 3 parts: flight, airport und weather
 # later will be replaced ----> API-Aufruf
 from datetime import datetime
+import requests
+from pprint import pprint
 
 FLIGHT_LIST = [
     {
@@ -71,8 +73,8 @@ def build_table_rows(flight_list):
         # Velocity in km/h
         speed_kmh = round(flight["velocity"] * 3.6)
 
-        # unix time ---> real time
-        last_contact = datetime.fromtimestamp(flight["last_contact"]).strftime("%H:%M")
+        # ISO time text --> HH:MM
+        last_contact = datetime.fromisoformat(flight["last_contact"]).strftime("%H:%M")
 
         row = {
             "callsign": flight["callsign"],
@@ -92,7 +94,12 @@ def build_table_rows(flight_list):
 
 # Returns the list of flights for the dashboard.
 def get_flight_list():
-    return FLIGHT_LIST
+    # API address: get flight List
+    url = "http://127.0.0.1:8000/get_flight_list?limit=10&offset=0"
+    response = requests.get(url)
+    # JSON text -->  dictionary
+    data = response.json()
+    return data["flight_list"]
 
 
-# print(build_table_rows(FLIGHT_LIST))
+# pprint(build_table_rows(get_flight_list()))
