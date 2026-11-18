@@ -1,4 +1,5 @@
 from dash import html, dcc, dash_table
+from datetime import date
 
 # ===== Inhalt: links Tabelle mit Filtern, rechts Flug-Box + Wetter-Box =====
 # main.py holt ihn sich später mit "from components.content import content"
@@ -18,36 +19,19 @@ content = html.Div(
                             children=[
                                 html.Label("Search"),
                                 dcc.Input(
-                                    id="search-icao24",
+                                    id="search-callsign",
                                     type="text",
-                                    placeholder="Search icao24 no., e.g. 3c6444",
+                                    placeholder="Search callsign, e.g. DLH123",
                                     className="search-box",
                                 ),
                             ],
                         ),
-                        # Filter 1: Airline
-                        html.Div(
-                            children=[
-                                html.Label("Airline"),
-                                dcc.Dropdown(
-                                    id="filter-airline",
-                                    options=[
-                                        "All airlines",
-                                        "Lufthansa",
-                                        "Swiss",
-                                        "Austrian",
-                                    ],
-                                    value="All airlines",
-                                ),
-                            ],
-                            style={"width": "180px"},
-                        ),
-                        # Filter 2: Datum
+                        # Filter: Datum
                         html.Div(
                             children=[
                                 html.Label("Date"),
                                 dcc.DatePickerSingle(
-                                    id="filter-date", date="2026-10-31"
+                                    id="filter-date", date=date.today()
                                 ),
                             ],
                             style={"width": "140px"},
@@ -62,15 +46,16 @@ content = html.Div(
                     sort_action="native",
                     page_size=10,
                     columns=[
-                        {"name": "Flight", "id": "flight"},
-                        {"name": "Airline", "id": "airline"},
-                        {"name": "From", "id": "from"},
-                        {"name": "To", "id": "to"},
-                        {"name": "Departure", "id": "departure"},
-                        {"name": "Arrival", "id": "arrival"},
+                        # content from data.py
+                        {"name": "Callsign", "id": "callsign"},
                         {"name": "Status", "id": "status"},
-                        {"name": "ICAO24", "id": "icao24"},
-                        {"name": "Date", "id": "date"},
+                        {"name": "Altitude (m)", "id": "altitude"},
+                        {"name": "Speed (km/h)", "id": "speed"},
+                        {"name": "Airport", "id": "airport"},
+                        {"name": "City", "id": "city"},
+                        {"name": "Last contact", "id": "last_contact"},
+                        {"name": "Temp (°C)", "id": "temp"},
+                        {"name": "Weather", "id": "weather"},
                     ],
                     style_header={
                         "backgroundColor": "white",
@@ -110,16 +95,16 @@ content = html.Div(
                     ],
                     className="tile",
                 ),
-                # Box 2: Wetter am Zielflughafen
+                # Box 2:
                 html.Div(
                     children=[
-                        html.H3("Weather at destination"),
+                        html.H3("Weather at airport"),
                         html.Div(id="weather-box"),
                     ],
                     className="tile",
                 ),
             ],
-            style={"flex": "1"},  # 1 Teil breit
+            style={"flex": "1"},
         ),
     ],
     style={"display": "flex", "gap": "20px", "margin-top": "20px"},
