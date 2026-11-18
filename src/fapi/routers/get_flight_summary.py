@@ -15,7 +15,7 @@ class Get_Flight_Summary:
         flight_rows = self.get_count_flights(db, date)
         airport_rows = self.get_busiest_airport(db)
 
-        aircraft_in_the_air = air_rows[0]['count_on_ground'] if air_rows else 0
+        aircraft_in_the_air = air_rows[0]['count_in_air'] if air_rows else 0
         flights_today = flight_rows[0]['count'] if flight_rows else 0
         busiest_airport = airport_rows[0]['iata'] if airport_rows else 'N/A'
 
@@ -25,30 +25,35 @@ class Get_Flight_Summary:
             'busiest_airport': busiest_airport
         }
         
-    def get_aircraft_in_the_air(self, db: Database):
+    def get_aircraft_in_the_air(self, db: Database, date=None):
 
         # SQL:
         # select count(*) as count_on_ground 
         # from flight_state 
         # where on_ground = false
-
         flight_state = Table('flight_state')
 
         query = (
             Query.from_(flight_state)
-            .select(fn.Count('*').as_('count_on_ground'))
+            .select(fn.Count(flight_state.aircraft_icao24).distinct().as_('count_in_air'))
             .where(flight_state.on_ground == False)
         )
 
-        sql_string = query.get_sql()
-        result = db.execute_sql(sql_string)
+        if date:
+            query = query.where(fn.Date(flight_state.created_at) == Parameter('%s'))
+            result = db.execute_sql(query.get_sql(), (date,))
+        else:
+            query = query.where(fn.Date(flight_state.created_at) == Field('CURRENT_DATE'))
+            result = db.execute_sql(query.get_sql())
 
         return result
     
     def get_count_flights(self, db: Database, date):
         flight_state = Table('flight_state')
 
-        query = Query.from_(flight_state).select(fn.Count('*'))
+        query = Query.from_(flight_state).select(
+            fn.Count(flight_state.aircraft_icao24).distinct().as_('count')
+        )
 
         if date: 
             # SQL:
