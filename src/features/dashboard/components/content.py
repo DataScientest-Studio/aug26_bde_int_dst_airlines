@@ -1,4 +1,5 @@
 from dash import html, dcc, dash_table
+from datetime import date
 
 # ===== Inhalt: links Tabelle mit Filtern, rechts Flug-Box + Wetter-Box =====
 # main.py holt ihn sich später mit "from components.content import content"
@@ -30,7 +31,7 @@ content = html.Div(
                             children=[
                                 html.Label("Date"),
                                 dcc.DatePickerSingle(
-                                    id="filter-date", date="2026-10-31"
+                                    id="filter-date", date=date.today()
                                 ),
                             ],
                             style={"width": "140px"},

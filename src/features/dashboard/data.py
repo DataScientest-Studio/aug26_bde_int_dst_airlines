@@ -90,4 +90,9 @@ def build_table_rows(flight_list):
     return rows
 
 
+# Returns the list of flights for the dashboard.
+def get_flight_list():
+    return FLIGHT_LIST
+
+
 # print(build_table_rows(FLIGHT_LIST))

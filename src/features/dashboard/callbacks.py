@@ -6,7 +6,7 @@ import requests
 from app import app
 
 # Beispieldaten aus data.py
-from data import FLIGHT_LIST, build_table_rows
+from data import get_flight_list, build_table_rows
 
 
 # ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
@@ -27,7 +27,7 @@ def update_dashboard(search, date):
     if search is None:
         search = ""
     # data from data.py to table rows
-    rows = build_table_rows(FLIGHT_LIST)
+    rows = build_table_rows(get_flight_list())
 
     # content/result
     selected_flights = []
