@@ -7,48 +7,6 @@ from datetime import datetime
 import requests
 from pprint import pprint
 
-FLIGHT_LIST = [
-    {
-        # Part 1: flight data
-        "flight": {
-            "callsign": "DLH123",
-            "on_ground": False,  # False = in the air, True = am Boden
-            "baro_altitude": 10500,
-            "velocity": 230,  # velocity in m/s
-            "last_contact": 1762687500,  # Unix-Zeit
-        },
-        # Part 2: Airport data (Airport_model.py)
-        "airport": {
-            "icao": "EDDF",
-            "iata": "FRA",
-            "city": "Frankfurt",
-        },
-        # Part 3: Airport data (Airport_model.py)
-        "weather": {
-            "temp": 8.5,
-            "description": "broken clouds",
-        },
-    },
-    {
-        "flight": {
-            "callsign": "EWG45",
-            "on_ground": True,
-            "baro_altitude": 0,
-            "velocity": 0,
-            "last_contact": 1762687320,
-        },
-        "airport": {
-            "icao": "EDDK",
-            "iata": "CGN",
-            "city": "Köln",
-        },
-        "weather": {
-            "temp": 7.2,
-            "description": "clear sky",
-        },
-    },
-]
-
 
 # transform flight_list to flat rows for data flight table
 def build_table_rows(flight_list):
@@ -110,6 +68,3 @@ def get_flight_list():
     # JSON text -->  dictionary
     data = response.json()
     return data["flight_list"]
-
-
-# pprint(build_table_rows(get_flight_list()))
