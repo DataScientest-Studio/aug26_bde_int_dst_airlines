@@ -22,7 +22,7 @@ class Get_Flight_List:
         for row in flight_data: 
 
             flight = FlightModel(
-                flight_states_id = row["flight_state_id"],
+                flight_state_id = row["flight_state_id"],
                 callsign = row["callsign"],
                 time_position = row["time_position"],
                 last_contact = row["last_contact"],
@@ -32,16 +32,17 @@ class Get_Flight_List:
                 on_ground = row["on_ground"],
                 velocity = row["velocity"],
                 true_track = row["true_track"],
-                velocity_rate = row["velocity_rate"],
+                vertical_rate = row["vertical_rate"],
                 geo_altitude = row["geo_altitude"]
             ) if row else {}
 
             weather = WeatherModel(
                 weather_states_id = row["weather_state_id"],
-                temp = row["temp"],
-                wind_speed = row["wind_speed"],
-                wind_deg = row["wind_deg"],
-                cloudiness_persent = row["cloudiness_persent"],
+                temp = row["temperature_c"],
+                wind_speed = row["wind_speed_mps"],
+                wind_direction_deg = row["wind_direction_deg"],
+                cloudiness_percent = row["cloudiness_percent"],
+                wind_gust_mps = row["wind_gust_mps"],
                 time_of_record = row["time_of_record"],
                 main = row["main"],
                 description = row["description"],
@@ -49,7 +50,7 @@ class Get_Flight_List:
             )
 
             airport = AirportModel(
-                icao = row["icao"],
+                icao = row["airport_icao"],
                 iata = row["iata"],
                 city = row["city"],
                 latitude = row["latitude"],
@@ -81,6 +82,7 @@ class Get_Flight_List:
         fs = Table('flight_state').as_('fs')
         a = Table('airport').as_('a')
         ws = Table('weather_state').as_('ws')
+        w = Table('weather').as_('w')
 
         query = (
             Query.from_(fs)
@@ -89,6 +91,8 @@ class Get_Flight_List:
             .on(fs.airport_icao == a.airport_icao)
             .left_join(ws)
             .on(a.airport_icao == ws.airport_icao)
+            .left_join(w)
+            .on(ws.weather_id == w.weather_id)
             .limit(limit)
             .offset(offset)
         )
