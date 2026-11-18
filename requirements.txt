@@ -4,6 +4,6 @@ fastapi==0.156.1
 uvicorn==0.54.0
 httptools==0.9.0
 uvloop==0.23.0
-psycopg2
+psycopg2-binary
 pypika
 dash
