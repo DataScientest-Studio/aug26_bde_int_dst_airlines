@@ -35,17 +35,23 @@ def build_table_rows(flight_list):
             altitude = round(flight["baro_altitude"], 1)
 
         # Velocity in km/h
-        speed_kmh = round(flight["velocity"] * 3.6)
+        if flight["velocity"] is None:
+            speed_kmh = "-"
+        else:
+            speed_kmh = round(flight["velocity"] * 3.6)
 
         # ISO time text --> HH:MM
-        last_contact = (
-            datetime.fromisoformat(flight["last_contact"])
-            .astimezone()
-            .strftime("%H:%M")
-        )
+        if flight["last_contact"] is None:
+            last_contact = "-"
+        else:
+            last_contact = (
+                datetime.fromisoformat(flight["last_contact"])
+                .astimezone()
+                .strftime("%H:%M")
+            )
 
         row = {
-            "callsign": flight["callsign"],
+            "callsign": flight["callsign"] or "-",
             "status": status,
             "altitude": altitude,
             "speed": speed_kmh,
