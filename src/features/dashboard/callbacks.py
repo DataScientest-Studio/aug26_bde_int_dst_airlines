@@ -33,7 +33,7 @@ def update_dashboard(search, date):
     selected_flights = []
 
     for row in rows:
-        if search.upper() in row["callsign"].upper():
+        if row["callsign"] is not None and search.upper() in row["callsign"].upper():
             selected_flights.append(row)
 
     # no result ---> show message
