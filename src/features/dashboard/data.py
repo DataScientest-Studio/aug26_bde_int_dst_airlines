@@ -69,8 +69,26 @@ def build_table_rows(flight_list):
 # Returns the list of flights for the dashboard.
 def get_flight_list():
     # API address: get flight List
-    url = "http://127.0.0.1:8000/get_flight_list?limit=10&offset=0"
+    url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0"
     response = requests.get(url)
     # JSON text -->  dictionary
     data = response.json()
     return data["flight_list"]
+
+
+# Returns the airports as options for the dropdown.
+def get_airport_options():
+    # API address: get airport list
+    url = "http://127.0.0.1:8000/get_airport_list"
+    response = requests.get(url)
+    # JSON text --> dictionary
+    data = response.json()
+
+    options = []  # empty list
+    for airport in data["airport_list"]:
+        # text in the dropdown, e.g. "FRA - Frankfurt"
+        label = airport["iata"] + " - " + airport["city"]
+        # value for the filter: the iata code (same as in the table)
+        option = {"label": label, "value": airport["iata"]}
+        options.append(option)
+    return options

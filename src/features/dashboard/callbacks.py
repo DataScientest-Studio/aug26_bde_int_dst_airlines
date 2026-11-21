@@ -20,8 +20,9 @@ from data import get_flight_list, build_table_rows
     Output("no-flights-message", "children"),
     Input("search-callsign", "value"),
     Input("filter-date", "date"),
+    Input("filter-airport", "value"),
 )
-def update_dashboard(search, date):
+def update_dashboard(search, date, airport):
 
     # searchbox is empty?
     if search is None:
@@ -33,7 +34,16 @@ def update_dashboard(search, date):
     selected_flights = []
 
     for row in rows:
-        if row["callsign"] is not None and search.upper() in row["callsign"].upper():
+        # check 1: does the callsign match the search?
+        callsign_ok = (
+            row["callsign"] is not None and search.upper() in row["callsign"].upper()
+        )
+
+        # check 2: does the airport match? (None = all airports)
+        airport_ok = airport is None or row["airport"] == airport
+
+        # only if BOTH checks are ok, the flight goes into the table
+        if callsign_ok and airport_ok:
             selected_flights.append(row)
 
     # no result ---> show message
@@ -123,3 +133,32 @@ def show_selected_flight(active_cell, rows):
 def show_last_update(n):
     now = datetime.now().strftime("%H:%M:%S")
     return "Last update: " + now
+
+
+# ===== Callback 4: highlight the whole selected row =====
+@app.callback(
+    Output("flights-table", "style_data_conditional"),
+    Input("flights-table", "active_cell"),
+)
+def highlight_row(active_cell):
+    # rule 1: landed  in green
+    rule_landed = {"if": {"filter_query": '{status} = "Landed"'}, "color": "green"}
+
+    # rule 2:  in the air in blue
+    rule_in_air = {
+        "if": {"filter_query": '{status} = "In the air"'},
+        "color": "#1f6fd1",
+    }
+
+    # nothing clicked ? only the two old rules
+    if active_cell is None:
+        return [rule_landed, rule_in_air]
+
+    # number of the clicked row
+    row_number = active_cell["row"]
+
+    # rule 3: the clicked row gets a light blue background
+    rule_selected = {"if": {"row_index": row_number}, "backgroundColor": "#e3f0ff"}
+
+    # give all three rules to the table
+    return [rule_landed, rule_in_air, rule_selected]
