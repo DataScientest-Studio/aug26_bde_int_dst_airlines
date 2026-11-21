@@ -21,14 +21,16 @@ from data import get_flight_list, build_table_rows
     Input("search-callsign", "value"),
     Input("filter-date", "date"),
     Input("filter-airport", "value"),
+    Input("filter-time-from", "value"),
+    Input("filter-time-to", "value"),
 )
-def update_dashboard(search, date, airport):
+def update_dashboard(search, date, airport, time_from, time_to):
 
     # searchbox is empty?
     if search is None:
         search = ""
     # data from data.py to table rows
-    rows = build_table_rows(get_flight_list())
+    rows = build_table_rows(get_flight_list(date))
 
     # content/result
     selected_flights = []
@@ -42,8 +44,22 @@ def update_dashboard(search, date, airport):
         # check 2: does the airport match? (None = all airports)
         airport_ok = airport is None or row["airport"] == airport
 
+        # check 3: is the last contact inside the time range?
+        contact = row["last_contact"]  # e.g. "14:35" or "-"
+        time_ok = True
+
+        # "from" chosen: too early (or no time)? --> not ok
+        if time_from is not None:
+            if contact == "-" or contact < time_from:
+                time_ok = False
+
+        # "to" chosen: too late (or no time)? --> not ok
+        if time_to is not None:
+            if contact == "-" or contact > time_to:
+                time_ok = False
+
         # only if BOTH checks are ok, the flight goes into the table
-        if callsign_ok and airport_ok:
+        if callsign_ok and airport_ok and time_ok:
             selected_flights.append(row)
 
     # no result ---> show message

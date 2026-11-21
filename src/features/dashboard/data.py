@@ -67,9 +67,9 @@ def build_table_rows(flight_list):
 
 
 # Returns the list of flights for the dashboard.
-def get_flight_list():
-    # API address: get flight List
-    url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0"
+def get_flight_list(date):
+    # API address: get flight List + 100 flights max for this date
+    url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0" + date
     response = requests.get(url)
     # JSON text -->  dictionary
     data = response.json()
@@ -90,5 +90,16 @@ def get_airport_options():
         label = airport["iata"] + " - " + airport["city"]
         # value for the filter: the iata code (same as in the table)
         option = {"label": label, "value": airport["iata"]}
+        options.append(option)
+    return options
+
+
+# Returns the hours 00:00 ... 23:00 as options for the time dropdowns.
+def get_time_options():
+    options = []  # empty list
+    for hour in range(24):
+        # e.g. 7 --> "07:00" (zfill adds a leading zero)
+        text = str(hour).zfill(2) + ":00"
+        option = {"label": text, "value": text}
         options.append(option)
     return options
