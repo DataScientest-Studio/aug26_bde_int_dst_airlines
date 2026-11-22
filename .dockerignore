@@ -1,0 +1,16 @@
+.git
+.env
+airflow/.env
+
+.venv/
+.venv-airflow/
+__pycache__/
+*.py[cod]
+
+data/raw
+
+airflow/logs/
+airflow/config/
+airflow/plugins/
+
+reports/
