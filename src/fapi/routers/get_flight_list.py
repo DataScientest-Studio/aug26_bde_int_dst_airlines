@@ -4,7 +4,7 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
-from pypika import Query, Table
+from pypika import Query, Table, functions as fn, Parameter
 
 class Get_Flight_List:
     
@@ -12,10 +12,13 @@ class Get_Flight_List:
         self.router = APIRouter()
         self.router.add_api_route("/get_flight_list", self.get_flight_list, methods=["GET"])
 
-    def get_flight_list(self, limit=10, offset=0, db: Database = Depends(get_db)):
+    def get_flight_list(self, limit=10, offset=0, date=None, db: Database = Depends(get_db)):
 
 
-        flight_data = self.get_flight_rows(db, limit, offset)
+        flight_data = self.get_flight_rows(db, limit, offset, date)
+
+        raw_count = self.get_flight_data_max_count(db)
+        max_count = raw_count[0]["count"] if raw_count else 0
 
         flight_list = []
 
@@ -69,10 +72,11 @@ class Get_Flight_List:
             })
 
         return {
-            'flight_list': flight_list
+            'flight_list': flight_list,
+            'max_count': max_count
         }
 
-    def get_flight_rows(self, db: Database, limit, offset):
+    def get_flight_rows(self, db: Database, limit, offset, date):
         # SQL:
         # SELECT * 
         # FROM flight_state fs 
@@ -93,12 +97,23 @@ class Get_Flight_List:
             .on(a.airport_icao == ws.airport_icao)
             .left_join(w)
             .on(ws.weather_id == w.weather_id)
+            .where(fn.Date(fs.created_at) == Parameter('%s'))
             .limit(limit)
             .offset(offset)
         )
 
+        result = db.execute_sql(query.get_sql(), (date,))
+
+        return result
+        
+    def get_flight_data_max_count(self, db: Database):
+        # SQL:
+        # select count(*) from airport
+        fs = Table('flight_state')
+        query = Query.from_(fs).select(fn.Count('*').as_('count'))
         sql_string = query.get_sql()
 
         result = db.execute_sql(sql_string)
+    
 
         return result
