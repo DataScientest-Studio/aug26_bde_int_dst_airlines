@@ -1,5 +1,6 @@
 from dash import html, dcc, dash_table
 from datetime import date
+from data import get_airport_options, get_time_options
 
 # ===== Inhalt: links Tabelle mit Filtern, rechts Flug-Box + Wetter-Box =====
 # main.py holt ihn sich später mit "from components.content import content"
@@ -26,6 +27,18 @@ content = html.Div(
                                 ),
                             ],
                         ),
+                        # Filter: Airport
+                        html.Div(
+                            children=[
+                                html.Label("Airport"),
+                                dcc.Dropdown(
+                                    id="filter-airport",
+                                    options=get_airport_options(),
+                                    placeholder="All airports",
+                                ),
+                            ],
+                            style={"width": "180px"},
+                        ),
                         # Filter: Datum
                         html.Div(
                             children=[
@@ -35,6 +48,30 @@ content = html.Div(
                                 ),
                             ],
                             style={"width": "140px"},
+                        ),
+                        # Filter: time from
+                        html.Div(
+                            children=[
+                                html.Label("From"),
+                                dcc.Dropdown(
+                                    id="filter-time-from",
+                                    options=get_time_options(),
+                                    placeholder="00:00",
+                                ),
+                            ],
+                            style={"width": "110px"},
+                        ),
+                        # Filter: time to
+                        html.Div(
+                            children=[
+                                html.Label("To"),
+                                dcc.Dropdown(
+                                    id="filter-time-to",
+                                    options=get_time_options(),
+                                    placeholder="23:59",
+                                ),
+                            ],
+                            style={"width": "110px"},
                         ),
                     ],
                 ),

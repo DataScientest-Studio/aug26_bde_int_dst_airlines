@@ -10,52 +10,53 @@ from data import get_flight_list, build_table_rows
 
 
 # ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
+# ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
 @app.callback(
     # gleiche Reihenfolge wie beim return
     Output("kpi-flights", "children"),
-    Output("kpi-in-air", "children"),
     Output("kpi-busiest", "children"),
-    Output("kpi-duration", "children"),
     Output("flights-table", "data"),
     Output("no-flights-message", "children"),
     Input("search-callsign", "value"),
     Input("filter-date", "date"),
+    Input("filter-airport", "value"),
+    Input("filter-time-from", "value"),
+    Input("filter-time-to", "value"),
 )
-def update_dashboard(search, date):
+def update_dashboard(search, date, airport, time_from, time_to):
 
-    # searchbox is empty?
-    if search is None:
-        search = ""
-    # data from data.py to table rows
-    rows = build_table_rows(get_flight_list())
+    # the API filters in the whole database --> we only send the filters
+    api_answer = get_flight_list(date, airport, time_from, time_to, search)
 
-    # content/result
-    selected_flights = []
+    # two parts out of the answer
+    flight_list = api_answer["flight_list"]
+    max_count = api_answer["max_count"]
 
-    for row in rows:
-        if row["callsign"] is not None and search.upper() in row["callsign"].upper():
-            selected_flights.append(row)
+    # API data --> table rows
+    selected_flights = build_table_rows(flight_list)
 
     # no result ---> show message
     if len(selected_flights) == 0:
         message = "No flights found for this filter."
     else:
-        message = ""
+        message = (
+            "Showing "
+            + str(len(selected_flights))
+            + " of "
+            + str(max_count)
+            + " flights"
+        )
 
-    # BOX 1-3: get data from Backend
+    # KPI tiles: get data from Backend
     url = "http://127.0.0.1:8000/get_flight_summary?date=" + date
     response = requests.get(url)
     summary = response.json()
 
     number_of_flights = summary["flights_today"]
-    in_air = summary["aircraft_in_the_air"]
     busiest = summary["busiest_airport"]
 
-    # Kachel 4: kommt später
-    duration = "tbd"
-
-    # gleiche Reihenfolge wie die Outputs
-    return number_of_flights, in_air, busiest, duration, selected_flights, message
+    # same order as the Outputs
+    return number_of_flights, busiest, selected_flights, message
 
 
 # ===== Callback 2: selct row--> show details  =====
@@ -102,6 +103,8 @@ def show_selected_flight(active_cell, rows):
     info_box_2 = [
         html.P("City "),
         html.H2(flight["city"]),
+        # weather icon
+        html.Img(src=flight["icon"], style={"width": "60px"}),
         html.Div(
             className="row",
             children=[html.P("Temperature"), html.P(str(flight["temp"]) + " °C")],
@@ -123,3 +126,32 @@ def show_selected_flight(active_cell, rows):
 def show_last_update(n):
     now = datetime.now().strftime("%H:%M:%S")
     return "Last update: " + now
+
+
+# ===== Callback 4: highlight the whole selected row =====
+@app.callback(
+    Output("flights-table", "style_data_conditional"),
+    Input("flights-table", "active_cell"),
+)
+def highlight_row(active_cell):
+    # rule 1: landed  in green
+    rule_landed = {"if": {"filter_query": '{status} = "Landed"'}, "color": "green"}
+
+    # rule 2:  in the air in blue
+    rule_in_air = {
+        "if": {"filter_query": '{status} = "In the air"'},
+        "color": "#1f6fd1",
+    }
+
+    # nothing clicked ? only the two old rules
+    if active_cell is None:
+        return [rule_landed, rule_in_air]
+
+    # number of the clicked row
+    row_number = active_cell["row"]
+
+    # rule 3: the clicked row gets a light blue background
+    rule_selected = {"if": {"row_index": row_number}, "backgroundColor": "#e3f0ff"}
+
+    # give all three rules to the table
+    return [rule_landed, rule_in_air, rule_selected]
