@@ -13,9 +13,7 @@ from data import get_flight_list, build_table_rows
 @app.callback(
     # gleiche Reihenfolge wie beim return
     Output("kpi-flights", "children"),
-    Output("kpi-in-air", "children"),
     Output("kpi-busiest", "children"),
-    Output("kpi-duration", "children"),
     Output("flights-table", "data"),
     Output("no-flights-message", "children"),
     Input("search-callsign", "value"),
@@ -74,14 +72,10 @@ def update_dashboard(search, date, airport, time_from, time_to):
     summary = response.json()
 
     number_of_flights = summary["flights_today"]
-    in_air = summary["aircraft_in_the_air"]
     busiest = summary["busiest_airport"]
 
-    # Kachel 4: kommt später
-    duration = "tbd"
-
     # gleiche Reihenfolge wie die Outputs
-    return number_of_flights, in_air, busiest, duration, selected_flights, message
+    return number_of_flights, busiest, selected_flights, message
 
 
 # ===== Callback 2: selct row--> show details  =====
@@ -128,6 +122,8 @@ def show_selected_flight(active_cell, rows):
     info_box_2 = [
         html.P("City "),
         html.H2(flight["city"]),
+        # weather icon
+        html.Img(src=flight["icon"], style={"width": "60px"}),
         html.Div(
             className="row",
             children=[html.P("Temperature"), html.P(str(flight["temp"]) + " °C")],

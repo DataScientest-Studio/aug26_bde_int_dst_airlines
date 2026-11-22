@@ -49,6 +49,13 @@ def build_table_rows(flight_list):
                 .astimezone()
                 .strftime("%H:%M")
             )
+        # weather icon: code (e.g. "01n") --> image link
+        if weather["icon_id"] is None:
+            icon_url = ""
+        else:
+            icon_url = (
+                "https://openweathermap.org/img/wn/" + weather["icon_id"] + "@2x.png"
+            )
 
         row = {
             "callsign": flight["callsign"] or "-",
@@ -60,6 +67,7 @@ def build_table_rows(flight_list):
             "last_contact": last_contact,
             "temp": weather["temp"],
             "weather": weather["description"],
+            "icon": icon_url,
         }
         # add the row to the list
         rows.append(row)
@@ -69,7 +77,7 @@ def build_table_rows(flight_list):
 # Returns the list of flights for the dashboard.
 def get_flight_list(date):
     # API address: get flight List + 100 flights max for this date
-    url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0" + date
+    url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0&date=" + date
     response = requests.get(url)
     # JSON text -->  dictionary
     data = response.json()
