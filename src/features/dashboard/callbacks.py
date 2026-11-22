@@ -10,6 +10,7 @@ from data import get_flight_list, build_table_rows
 
 
 # ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
+# ===== Callback 1: Filter ändern --> Kacheln und Tabelle aktualisieren =====
 @app.callback(
     # gleiche Reihenfolge wie beim return
     Output("kpi-flights", "children"),
@@ -24,41 +25,11 @@ from data import get_flight_list, build_table_rows
 )
 def update_dashboard(search, date, airport, time_from, time_to):
 
-    # searchbox is empty?
-    if search is None:
-        search = ""
-    # data from data.py to table rows
-    rows = build_table_rows(get_flight_list(date))
+    # the API filters in the whole database --> we only send the filters
+    flight_list = get_flight_list(date, airport, time_from, time_to, search)
 
-    # content/result
-    selected_flights = []
-
-    for row in rows:
-        # check 1: does the callsign match the search?
-        callsign_ok = (
-            row["callsign"] is not None and search.upper() in row["callsign"].upper()
-        )
-
-        # check 2: does the airport match? (None = all airports)
-        airport_ok = airport is None or row["airport"] == airport
-
-        # check 3: is the last contact inside the time range?
-        contact = row["last_contact"]  # e.g. "14:35" or "-"
-        time_ok = True
-
-        # "from" chosen: too early (or no time)? --> not ok
-        if time_from is not None:
-            if contact == "-" or contact < time_from:
-                time_ok = False
-
-        # "to" chosen: too late (or no time)? --> not ok
-        if time_to is not None:
-            if contact == "-" or contact > time_to:
-                time_ok = False
-
-        # only if BOTH checks are ok, the flight goes into the table
-        if callsign_ok and airport_ok and time_ok:
-            selected_flights.append(row)
+    # API data --> table rows
+    selected_flights = build_table_rows(flight_list)
 
     # no result ---> show message
     if len(selected_flights) == 0:
@@ -66,7 +37,7 @@ def update_dashboard(search, date, airport, time_from, time_to):
     else:
         message = ""
 
-    # BOX 1-3: get data from Backend
+    # KPI tiles: get data from Backend
     url = "http://127.0.0.1:8000/get_flight_summary?date=" + date
     response = requests.get(url)
     summary = response.json()
@@ -74,7 +45,7 @@ def update_dashboard(search, date, airport, time_from, time_to):
     number_of_flights = summary["flights_today"]
     busiest = summary["busiest_airport"]
 
-    # gleiche Reihenfolge wie die Outputs
+    # same order as the Outputs
     return number_of_flights, busiest, selected_flights, message
 
 

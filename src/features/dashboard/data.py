@@ -75,11 +75,23 @@ def build_table_rows(flight_list):
 
 
 # Returns the list of flights for the dashboard.
-def get_flight_list(date):
-    # API address: get flight List + 100 flights max for this date
+# The API filters in  database (API get_flight_list).
+def get_flight_list(date, airport, time_from, time_to, search):
+    # base address: max. 100 flights for this date
     url = "http://127.0.0.1:8000/get_flight_list?limit=100&offset=0&date=" + date
+
+    # add each filter only if it is chosen
+    if airport is not None:
+        url = url + "&iata=" + airport
+    if time_from is not None:
+        url = url + "&time_from=" + time_from
+    if time_to is not None:
+        url = url + "&time_to=" + time_to
+    if search is not None and search != "":
+        url = url + "&callsign=" + search
+
     response = requests.get(url)
-    # JSON text -->  dictionary
+    # JSON text --> dictionary
     data = response.json()
     return data["flight_list"]
 
