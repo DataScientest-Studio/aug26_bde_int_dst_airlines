@@ -90,3 +90,14 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# local Airflow configuration and runtime files
+airflow/.env
+airflow/logs/
+airflow/config/
+airflow/plugins/
+
+# local python environments
+.venv/
+.venv-airflow/
+
