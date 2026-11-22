@@ -93,7 +93,7 @@ def get_flight_list(date, airport, time_from, time_to, search):
     response = requests.get(url)
     # JSON text --> dictionary
     data = response.json()
-    return data["flight_list"]
+    return data
 
 
 # Returns the airports as options for the dropdown.

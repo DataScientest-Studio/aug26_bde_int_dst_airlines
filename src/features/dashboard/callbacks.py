@@ -26,7 +26,11 @@ from data import get_flight_list, build_table_rows
 def update_dashboard(search, date, airport, time_from, time_to):
 
     # the API filters in the whole database --> we only send the filters
-    flight_list = get_flight_list(date, airport, time_from, time_to, search)
+    api_answer = get_flight_list(date, airport, time_from, time_to, search)
+
+    # two parts out of the answer
+    flight_list = api_answer["flight_list"]
+    max_count = api_answer["max_count"]
 
     # API data --> table rows
     selected_flights = build_table_rows(flight_list)
@@ -35,7 +39,13 @@ def update_dashboard(search, date, airport, time_from, time_to):
     if len(selected_flights) == 0:
         message = "No flights found for this filter."
     else:
-        message = ""
+        message = (
+            "Showing "
+            + str(len(selected_flights))
+            + " of "
+            + str(max_count)
+            + " flights"
+        )
 
     # KPI tiles: get data from Backend
     url = "http://127.0.0.1:8000/get_flight_summary?date=" + date
