@@ -4,7 +4,7 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
-from pypika import Query, Table, functions as fn, Parameter, CustomFunction
+from pypika import PostgreSQLQuery, Query, Table, functions as fn, Parameter, CustomFunction, Order
 
 CastTime = CustomFunction('TIME', ['column'])
 
@@ -118,7 +118,8 @@ class Get_Flight_List:
         w = Table('weather').as_('w')
 
         query = (
-            Query.from_(fs)
+            PostgreSQLQuery.from_(fs)
+            .distinct_on(fs.flight_state_id)
             .select('*')
             .left_join(a)
             .on(fs.airport_icao == a.airport_icao)
@@ -129,15 +130,18 @@ class Get_Flight_List:
         )
 
         query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
-        query = query.limit(limit).offset(offset)
-        
+        query = query.limit(limit).offset(offset).orderby(fs.flight_state_id, order=Order.desc)
+        stringq = query.get_sql()
+        print(stringq)
         result = db.execute_sql(query.get_sql(), tuple(params))
 
         return result
 
     def get_flight_data_max_count(self, date, time_from, time_to, iata, callsign, db: Database):
         # SQL:
-        # select count(*) from airport
+        # SELECT COUNT(*) 
+        # FROM flight_state fs 
+        # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
         fs = Table('flight_state')
         a = Table('airport')
         query = Query.from_(fs).select(fn.Count('*').as_('count')).left_join(a).on(fs.airport_icao == a.airport_icao)
