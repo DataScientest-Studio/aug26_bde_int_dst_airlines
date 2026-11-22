@@ -4,7 +4,9 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
-from pypika import Query, Table, functions as fn, Parameter
+from pypika import Query, Table, functions as fn, Parameter, CustomFunction
+
+CastTime = CustomFunction('TIME', ['column'])
 
 class Get_Flight_List:
     
@@ -12,12 +14,12 @@ class Get_Flight_List:
         self.router = APIRouter()
         self.router.add_api_route("/get_flight_list", self.get_flight_list, methods=["GET"])
 
-    def get_flight_list(self, limit=10, offset=0, date=None, db: Database = Depends(get_db)):
+    def get_flight_list(self, limit=10, offset=0, date=None, time_from=None, time_to=None, iata=None, callsign=None, db: Database = Depends(get_db)):
 
 
-        flight_data = self.get_flight_rows(db, limit, offset, date)
+        flight_data = self.get_flight_rows(db, limit, offset, date, time_from, time_to, iata, callsign)
 
-        raw_count = self.get_flight_data_max_count(db)
+        raw_count = self.get_flight_data_max_count(date, time_from, time_to, iata, callsign, db)
         max_count = raw_count[0]["count"] if raw_count else 0
 
         flight_list = []
@@ -76,7 +78,34 @@ class Get_Flight_List:
             'max_count': max_count
         }
 
-    def get_flight_rows(self, db: Database, limit, offset, date):
+    def filter(self, query, fs, a, date, time_from, time_to, iata, callsign):
+
+        params = []
+        
+        if date:
+            query = query.where(fn.Date(fs.created_at) == Parameter('%s'))
+            params.append(date)
+
+        if time_from:
+            # Erwartet z. B. "08:00" oder "08:00:00"
+            query = query.where(CastTime(fs.created_at) >= Parameter('%s'))
+            params.append(time_from)
+
+        if time_to:
+            query = query.where(CastTime(fs.created_at) <= Parameter('%s'))
+            params.append(time_to)
+
+        if iata:
+            query = query.where(a.iata == Parameter('%s'))
+            params.append(iata.upper())
+
+        if callsign:
+           query = query.where(fs.callsign.ilike(Parameter('%s')))
+           params.append(f"%{callsign.strip()}%")
+           
+        return query, params
+        
+    def get_flight_rows(self, db: Database, limit, offset, date, time_from, time_to, iata, callsign):
         # SQL:
         # SELECT * 
         # FROM flight_state fs 
@@ -97,23 +126,24 @@ class Get_Flight_List:
             .on(a.airport_icao == ws.airport_icao)
             .left_join(w)
             .on(ws.weather_id == w.weather_id)
-            .where(fn.Date(fs.created_at) == Parameter('%s'))
-            .limit(limit)
-            .offset(offset)
         )
 
-        result = db.execute_sql(query.get_sql(), (date,))
+        query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
+        query = query.limit(limit).offset(offset)
+        
+        result = db.execute_sql(query.get_sql(), tuple(params))
 
         return result
-        
-    def get_flight_data_max_count(self, db: Database):
+
+    def get_flight_data_max_count(self, date, time_from, time_to, iata, callsign, db: Database):
         # SQL:
         # select count(*) from airport
         fs = Table('flight_state')
-        query = Query.from_(fs).select(fn.Count('*').as_('count'))
-        sql_string = query.get_sql()
+        a = Table('airport')
+        query = Query.from_(fs).select(fn.Count('*').as_('count')).left_join(a).on(fs.airport_icao == a.airport_icao)
 
-        result = db.execute_sql(sql_string)
-    
+        query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
+
+        result = db.execute_sql(query.get_sql(), tuple(params))
 
         return result
