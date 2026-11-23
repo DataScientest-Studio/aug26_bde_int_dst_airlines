@@ -6,6 +6,7 @@ from .routers.get_flight_summary import Get_Flight_Summary
 from .routers.get_flight import Get_Flight
 from .routers.get_flight_list import Get_Flight_List
 from .routers.get_icon_list import Get_Icon_List
+from .routers.get_holding_predict import Get_Holding_Predict
 
 class FAPI: 
     """Core FastAPI application wrapper.
@@ -25,7 +26,8 @@ class FAPI:
             Get_Flight_Summary().router,
             Get_Flight().router,
             Get_Flight_List().router,
-            Get_Icon_List().router
+            Get_Icon_List().router,
+            Get_Holding_Predict().router
         ]
 
         # Register each router with the FastAPI application instance

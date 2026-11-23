@@ -7,3 +7,6 @@ uvloop==0.23.0
 psycopg2-binary
 pypika
 dash
+pandas
+scikit-learn
+matplotlib
