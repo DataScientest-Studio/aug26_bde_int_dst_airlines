@@ -131,8 +131,7 @@ class Get_Flight_List:
 
         query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
         query = query.limit(limit).offset(offset).orderby(fs.flight_state_id, order=Order.desc)
-        stringq = query.get_sql()
-        print(stringq)
+
         result = db.execute_sql(query.get_sql(), tuple(params))
 
         return result
