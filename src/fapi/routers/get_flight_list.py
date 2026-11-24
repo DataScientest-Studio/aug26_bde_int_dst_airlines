@@ -6,7 +6,7 @@ from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
 from pypika import PostgreSQLQuery, Query, Table, functions as fn, Parameter, CustomFunction, Order
 
-CastTime = CustomFunction('TIME', ['column'])
+ToChar = CustomFunction('TO_CHAR', ['column', 'fmt'])
 
 class Get_Flight_List:
     
@@ -87,13 +87,14 @@ class Get_Flight_List:
             params.append(date)
 
         if time_from:
-            # Erwartet z. B. "08:00" oder "08:00:00"
-            query = query.where(CastTime(fs.created_at) >= Parameter('%s'))
-            params.append(time_from)
-
+            fmt = 'HH24:MI:SS' if len(time_from.strip()) > 5 else 'HH24:MI'
+            query = query.where(ToChar(fs.created_at, fmt) >= Parameter('%s'))
+            params.append(time_from.strip())
+ 
         if time_to:
-            query = query.where(CastTime(fs.created_at) <= Parameter('%s'))
-            params.append(time_to)
+            fmt = 'HH24:MI:SS' if len(time_to.strip()) > 5 else 'HH24:MI'
+            query = query.where(ToChar(fs.created_at, fmt) <= Parameter('%s'))
+            params.append(time_to.strip())
 
         if iata:
             query = query.where(a.iata == Parameter('%s'))
