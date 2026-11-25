@@ -7,6 +7,7 @@ from src.databases.dependencies.get_database import get_db
 from pypika import PostgreSQLQuery, Query, Table, functions as fn, Parameter, CustomFunction, Order
 
 ToChar = CustomFunction('TO_CHAR', ['column', 'fmt'])
+TimeZone = CustomFunction('TIMEZONE', ['tz', 'ts'])
 
 class Get_Flight_List:
     
@@ -81,19 +82,21 @@ class Get_Flight_List:
     def filter(self, query, fs, a, date, time_from, time_to, iata, callsign):
 
         params = []
+        tz = 'Europe/Berlin'
+        local_ts = TimeZone(tz, fs.last_contact)
         
         if date:
-            query = query.where(fn.Date(fs.created_at) == Parameter('%s'))
+            query = query.where(fn.Date(fs.last_contact) == Parameter('%s'))
             params.append(date)
 
         if time_from:
             fmt = 'HH24:MI:SS' if len(time_from.strip()) > 5 else 'HH24:MI'
-            query = query.where(ToChar(fs.created_at, fmt) >= Parameter('%s'))
+            query = query.where(ToChar(local_ts, fmt) >= Parameter('%s'))
             params.append(time_from.strip())
- 
+
         if time_to:
             fmt = 'HH24:MI:SS' if len(time_to.strip()) > 5 else 'HH24:MI'
-            query = query.where(ToChar(fs.created_at, fmt) <= Parameter('%s'))
+            query = query.where(ToChar(local_ts, fmt) <= Parameter('%s'))
             params.append(time_to.strip())
 
         if iata:
