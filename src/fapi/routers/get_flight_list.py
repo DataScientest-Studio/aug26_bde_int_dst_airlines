@@ -112,16 +112,25 @@ class Get_Flight_List:
         query = f"""
         with subselect as (
             select
-            fs.*,
-            a.iata,
-            a.city,
-            a.latitude as airport_latitude,
-            a.longitude as airport_longitude,
-            a.timezone,
-            a.lamin,
-            a.lomin,
-            a.lamax,
-            a.lomax,
+                fs.*,
+                a.iata,
+                a.city,
+                a.latitude as airport_latitude,
+                a.longitude as airport_longitude,
+                a.timezone,
+                a.lamin,
+                a.lomin,
+                a.lamax,
+                a.lomax
+            from flight_state fs
+            left join airport a
+                on fs.airport_icao = a.airport_icao
+            {where_sql}
+            order by fs.flight_state_id desc
+            limit %s offset %s
+        )
+        select
+            ss.*,
             ws.weather_state_id,
             ws.temperature_c,
             ws.wind_speed_mps,
@@ -132,47 +141,44 @@ class Get_Flight_List:
             ws.weather_id,
             w.main,
             w.description,
-            w.icon_id,
-            row_number() over (
-                partition by fs.flight_state_id
-                order by
-                    case
-                        when (ws.time_of_record - fs.last_contact) < interval '0'
-                        then -(ws.time_of_record - fs.last_contact)
-                        else (ws.time_of_record - fs.last_contact)
-                    end asc,
+            w.icon_id
+        from subselect ss
+        left join lateral (
+            select
+                ws.weather_state_id,
+                ws.temperature_c,
+                ws.wind_speed_mps,
+                ws.wind_direction_deg,
+                ws.cloudiness_percent,
+                ws.wind_gust_mps,
+                ws.time_of_record,
+                ws.weather_id
+            from weather_state ws
+            where ws.airport_icao = ss.airport_icao
+            order by
+                case
+                    when (ws.time_of_record - ss.last_contact) < interval '0'
+                        then -(ws.time_of_record - ss.last_contact)
+                    else (ws.time_of_record - ss.last_contact)
+                end asc,
                 ws.weather_state_id desc
-            ) as rownumber
-            from flight_state fs
-            left join airport a
-                on fs.airport_icao = a.airport_icao
-            left join weather_state ws
-                on a.airport_icao = ws.airport_icao
-            left join weather w
-                on ws.weather_id = w.weather_id
-            {where_sql}
-        )
-        select *
-        from subselect
-        where rownumber = 1
-        order by flight_state_id desc
-        limit %s offset %s
+            limit 1
+        ) ws on true
+        left join weather w
+            on ws.weather_id = w.weather_id
+        order by ss.flight_state_id desc
         """
 
         return db.execute_sql(query, tuple(params))
 
     def get_flight_data_max_count(self, date, time_from, time_to, iata, callsign, db: Database):
-        # SQL:
-        # SELECT COUNT(*) 
-        # FROM flight_state fs 
-        # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
         where_sql, params = self.filter(date, time_from, time_to, iata, callsign)
 
         query = f"""
-        SELECT COUNT(*) AS count
-        FROM flight_state fs
-        LEFT JOIN airport a
-            ON fs.airport_icao = a.airport_icao
+        select count(*) as count
+        from flight_state fs
+        left join airport a
+            on fs.airport_icao = a.airport_icao
         {where_sql}
         """
 
