@@ -11,11 +11,11 @@ content = html.Div(
             className="tile",
             children=[
                 html.H3("Flights"),  # Box-Titel
-                # Suche, Airline und Datum nebeneinander
+                # Suche, Airport, Datum und Uhrzeit nebeneinander
                 html.Div(
                     className="filter-row",
                     children=[
-                        # Suche nach icao24
+                        # Suche nach Callsign
                         html.Div(
                             children=[
                                 html.Label("Search"),
@@ -77,45 +77,51 @@ content = html.Div(
                 ),
                 # Hinweis, wenn keine Flüge gefunden werden
                 html.P(id="no-flights-message"),
-                # Flug-Tabelle
-                dash_table.DataTable(
-                    id="flights-table",
-                    sort_action="native",
-                    page_size=10,
-                    columns=[
-                        # content from data.py
-                        {"name": "Callsign", "id": "callsign"},
-                        {"name": "Status", "id": "status"},
-                        {"name": "Altitude (m)", "id": "altitude"},
-                        {"name": "Speed (km/h)", "id": "speed"},
-                        {"name": "Airport", "id": "airport"},
-                        {"name": "City", "id": "city"},
-                        {"name": "Last contact", "id": "last_contact"},
-                        {"name": "Temp (°C)", "id": "temp"},
-                        {"name": "Weather", "id": "weather"},
-                    ],
-                    style_header={
-                        "backgroundColor": "white",
-                        "color": "#222222",
-                        "fontWeight": "bold",
-                        "borderBottom": "2px solid #dddddd",
-                    },
-                    style_cell={
-                        "padding": "10px",
-                        "textAlign": "left",
-                        "fontFamily": "Arial",
-                        "border": "none",
-                        "borderBottom": "1px solid #eeeeee",
-                    },
-                    style_data_conditional=[
-                        {
-                            "if": {"filter_query": '{status} = "Landed"'},
-                            "color": "green",
-                        },
-                        {
-                            "if": {"filter_query": '{status} = "In the air"'},
-                            "color": "#1f6fd1",
-                        },
+                # NEU: Lade-Kreisel
+                dcc.Loading(
+                    type="circle",
+                    children=[
+                        # Flug-Tabelle
+                        dash_table.DataTable(
+                            id="flights-table",
+                            sort_action="native",
+                            page_size=10,
+                            columns=[
+                                # content from data.py
+                                {"name": "Callsign", "id": "callsign"},
+                                {"name": "Status", "id": "status"},
+                                {"name": "Altitude (m)", "id": "altitude"},
+                                {"name": "Speed (km/h)", "id": "speed"},
+                                {"name": "Airport", "id": "airport"},
+                                {"name": "City", "id": "city"},
+                                {"name": "Last contact", "id": "last_contact"},
+                                {"name": "Temp (°C)", "id": "temp"},
+                                {"name": "Weather", "id": "weather"},
+                            ],
+                            style_header={
+                                "backgroundColor": "white",
+                                "color": "#222222",
+                                "fontWeight": "bold",
+                                "borderBottom": "2px solid #dddddd",
+                            },
+                            style_cell={
+                                "padding": "10px",
+                                "textAlign": "left",
+                                "fontFamily": "Arial",
+                                "border": "none",
+                                "borderBottom": "1px solid #eeeeee",
+                            },
+                            style_data_conditional=[
+                                {
+                                    "if": {"filter_query": '{status} = "Landed"'},
+                                    "color": "green",
+                                },
+                                {
+                                    "if": {"filter_query": '{status} = "In the air"'},
+                                    "color": "#1f6fd1",
+                                },
+                            ],
+                        ),
                     ],
                 ),
             ],
@@ -132,7 +138,7 @@ content = html.Div(
                     ],
                     className="tile",
                 ),
-                # Box 2:
+                # Box 2: Wetter am Flughafen
                 html.Div(
                     children=[
                         html.H3("Weather at airport"),
