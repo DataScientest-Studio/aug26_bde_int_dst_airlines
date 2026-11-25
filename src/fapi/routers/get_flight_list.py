@@ -4,10 +4,7 @@ from src.fapi.models.flight_model import FlightModel
 from src.fapi.models.weather_model import WeatherModel
 from src.fapi.models.airport_model import AirportModel
 from src.databases.dependencies.get_database import get_db
-from pypika import PostgreSQLQuery, Query, Table, functions as fn, Parameter, CustomFunction, Order
 
-ToChar = CustomFunction('TO_CHAR', ['column', 'fmt'])
-TimeZone = CustomFunction('TIMEZONE', ['tz', 'ts'])
 
 class Get_Flight_List:
     
@@ -59,8 +56,8 @@ class Get_Flight_List:
                 icao = row["airport_icao"],
                 iata = row["iata"],
                 city = row["city"],
-                latitude = row["latitude"],
-                longitude = row["longitude"],
+                latitude = row["airport_latitude"],
+                longitude = row["airport_longitude"],
                 timezone = row["timezone"],
                 lamin = row["lamin"],
                 lomin = row["lomin"],
@@ -79,78 +76,106 @@ class Get_Flight_List:
             'max_count': max_count
         }
 
-    def filter(self, query, fs, a, date, time_from, time_to, iata, callsign):
-
+    def filter(self, date, time_from, time_to, iata, callsign):
+        conditions = []
         params = []
-        tz = 'Europe/Berlin'
-        local_ts = TimeZone(tz, fs.last_contact)
-        
+
         if date:
-            query = query.where(fn.Date(fs.last_contact) == Parameter('%s'))
+            conditions.append("DATE(TIMEZONE('Europe/Berlin', fs.last_contact)) = %s")
             params.append(date)
 
         if time_from:
             fmt = 'HH24:MI:SS' if len(time_from.strip()) > 5 else 'HH24:MI'
-            query = query.where(ToChar(local_ts, fmt) >= Parameter('%s'))
+            conditions.append(f"TO_CHAR(TIMEZONE('Europe/Berlin', fs.last_contact), '{fmt}') >= %s")
             params.append(time_from.strip())
 
         if time_to:
             fmt = 'HH24:MI:SS' if len(time_to.strip()) > 5 else 'HH24:MI'
-            query = query.where(ToChar(local_ts, fmt) <= Parameter('%s'))
+            conditions.append(f"TO_CHAR(TIMEZONE('Europe/Berlin', fs.last_contact), '{fmt}') <= %s")
             params.append(time_to.strip())
 
         if iata:
-            query = query.where(a.iata == Parameter('%s'))
-            params.append(iata.upper())
+            conditions.append("a.iata = %s")
+            params.append(iata.strip().upper())
 
         if callsign:
-           query = query.where(fs.callsign.ilike(Parameter('%s')))
-           params.append(f"%{callsign.strip()}%")
-           
-        return query, params
+            conditions.append("fs.callsign ILIKE %s")
+            params.append(f"%{callsign.strip()}%")
+
+        where_sql = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        return where_sql, params
         
     def get_flight_rows(self, db: Database, limit, offset, date, time_from, time_to, iata, callsign):
-        # SQL:
-        # SELECT * 
-        # FROM flight_state fs 
-        # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
-        # LEFT JOIN weather_state ws ON a.airport_icao = ws.airport_icao
-        
-        fs = Table('flight_state').as_('fs')
-        a = Table('airport').as_('a')
-        ws = Table('weather_state').as_('ws')
-        w = Table('weather').as_('w')
+        where_sql, params = self.filter(date, time_from, time_to, iata, callsign)
+        params.extend([limit, offset])
 
-        query = (
-            PostgreSQLQuery.from_(fs)
-            .distinct_on(fs.flight_state_id)
-            .select('*')
-            .left_join(a)
-            .on(fs.airport_icao == a.airport_icao)
-            .left_join(ws)
-            .on(a.airport_icao == ws.airport_icao)
-            .left_join(w)
-            .on(ws.weather_id == w.weather_id)
+        query = f"""
+        with subselect as (
+            select
+            fs.*,
+            a.iata,
+            a.city,
+            a.latitude as airport_latitude,
+            a.longitude as airport_longitude,
+            a.timezone,
+            a.lamin,
+            a.lomin,
+            a.lamax,
+            a.lomax,
+            ws.weather_state_id,
+            ws.temperature_c,
+            ws.wind_speed_mps,
+            ws.wind_direction_deg,
+            ws.cloudiness_percent,
+            ws.wind_gust_mps,
+            ws.time_of_record,
+            ws.weather_id,
+            w.main,
+            w.description,
+            w.icon_id,
+            row_number() over (
+                partition by fs.flight_state_id
+                order by
+                    case
+                        when (ws.time_of_record - fs.last_contact) < interval '0'
+                        then -(ws.time_of_record - fs.last_contact)
+                        else (ws.time_of_record - fs.last_contact)
+                    end asc,
+                ws.weather_state_id desc
+            ) as rownumber
+            from flight_state fs
+            left join airport a
+                on fs.airport_icao = a.airport_icao
+            left join weather_state ws
+                on a.airport_icao = ws.airport_icao
+            left join weather w
+                on ws.weather_id = w.weather_id
+            {where_sql}
         )
+        select *
+        from subselect
+        where rownumber = 1
+        order by flight_state_id desc
+        limit %s offset %s
+        """
 
-        query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
-        query = query.limit(limit).offset(offset).orderby(fs.flight_state_id, order=Order.desc)
-
-        result = db.execute_sql(query.get_sql(), tuple(params))
-
-        return result
+        return db.execute_sql(query, tuple(params))
 
     def get_flight_data_max_count(self, date, time_from, time_to, iata, callsign, db: Database):
         # SQL:
         # SELECT COUNT(*) 
         # FROM flight_state fs 
         # LEFT JOIN airport a ON fs.airport_icao = a.airport_icao 
-        fs = Table('flight_state')
-        a = Table('airport')
-        query = Query.from_(fs).select(fn.Count('*').as_('count')).left_join(a).on(fs.airport_icao == a.airport_icao)
+        where_sql, params = self.filter(date, time_from, time_to, iata, callsign)
 
-        query, params = self.filter(query, fs, a, date, time_from, time_to, iata, callsign)
+        query = f"""
+        SELECT COUNT(*) AS count
+        FROM flight_state fs
+        LEFT JOIN airport a
+            ON fs.airport_icao = a.airport_icao
+        {where_sql}
+        """
 
-        result = db.execute_sql(query.get_sql(), tuple(params))
+        result = db.execute_sql(query, tuple(params))
 
         return result
